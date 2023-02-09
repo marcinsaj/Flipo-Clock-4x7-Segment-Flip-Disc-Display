@@ -1,1 +1,1 @@
-# Flipo-7-Segment-Flip-Disc-Clock-Thermometer-Hygrometer
+## 7-Segment Flip-Disc Clock & Thermometer & Hygrometer

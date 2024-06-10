@@ -18,8 +18,8 @@
 
 #include <FlipDisc.h>   // https://github.com/marcinsaj/FlipDisc 
 
-  /* Attention: do not change! Changing these settings may physical damage the flip-disc displays.
-  Pin declaration for a dedicated controller */
+/* Attention: do not change! Changing these settings may physical damage the flip-disc displays.
+Pin declaration for a dedicated controller */
 #define EN_PIN A7  // Start & End SPI transfer data
 #define CH_PIN A2  // Charging PSPS module - turn ON/OFF
 #define PL_PIN A3  // Release the current pulse - turn ON/OFF 

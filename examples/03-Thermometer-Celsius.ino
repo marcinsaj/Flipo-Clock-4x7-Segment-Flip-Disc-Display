@@ -3,8 +3,8 @@
  * https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display                        *
  *                                                                                               *
  * Thermometer (Celsius)                                                                         *
- * You can set two parameters as you wish: the measurement and display frequency 
- * and the delay effect time between flip discs
+ * You can set two parameters: the measurement and display frequency                             * 
+ * and the delay effect time between flip discs                                                  *
  *                                                                                               *
  * REQUIRES the following Arduino libraries:                                                     *
  * - DHT Sensor Library: https://github.com/adafruit/DHT-sensor-library                          *

@@ -6,6 +6,8 @@
  * You can set two parameters: the measurement and display frequency                             * 
  * and the delay effect time between flip discs                                                  *
  *                                                                                               *
+ * Attention!!! - Firmware Update Instructions - https://bit.ly/4x7SEG-CLOCK-FIRMWARE-UPDATE     *
+ *                                                                                               *
  * REQUIRES the following Arduino libraries:                                                     *
  * - DHT Sensor Library: https://github.com/adafruit/DHT-sensor-library                          *
  * - Adafruit Unified Sensor Lib: https://github.com/adafruit/Adafruit_Sensor                    *

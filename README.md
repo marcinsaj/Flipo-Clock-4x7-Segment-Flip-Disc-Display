@@ -1,4 +1,7 @@
-## 7-Segment Flip-Disc Clock & Thermometer & Hygrometer
+## 7-Segment Flip-disc Clock & Thermometer & Hygrometer
+
+### Clock Power Supply
+The clock requires a good quality external 12V (minimum 1.5A) power supply, 5.5mm diameter plug, 2.1mm center pin positive +.
 
 ### Firmware Update
 - [Attention!!! - Firmware Update Instructions](https://bit.ly/4x7SEG-CLOCK-FIRMWARE-UPDATE)

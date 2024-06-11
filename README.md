@@ -7,19 +7,19 @@ The clock requires a good quality external 12V (minimum 1.5A) power supply,
 ```
 
 ### Firmware Update
-- [x][Attention!!! - Firmware Update Instructions](https://bit.ly/4x7SEG-CLOCK-FIRMWARE-UPDATE)
-- [x][01-Basic-Test](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/01-Basic-Test.ino)
-- [x][02-Word-Display](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/02-Word-Display.ino)
-- [x][03-Thermometer-Celsius](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/03-Thermometer-Celsius.ino)
-- [ ]04-Thermometer-Celsius-Humidity - to do
-- [x][05-Thermometer-Fahrenheit](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/05-Thermometer-Fahrenheit.ino)
-- [ ]06-Thermometer-Fahrenheit-Humidity - to do
-- [x][07-Classic-Clock-24-Hour](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/07-Classic-Clock-24-Hour.ino)
-- [x][08-Classic-Clock-12-Hour](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/08-Classic-Clock-12-Hour.ino)
-- [ ]09-Classic-Clock-24-Hour-Thermometer-Celsius-Humidity - to do
-- [ ]10-Classic-Clock-24-Hour-Thermometer-Fahrenheit-Humidity - to do
-- [ ]11-Classic-Clock-12-Hour-Thermometer-Celsius-Humidity - to do 
-- [ ]12-Classic-Clock-12-Hour-Thermometer-Fahrenheit-Humidity - to do
+- [x] [Attention!!! - Firmware Update Instructions](https://bit.ly/4x7SEG-CLOCK-FIRMWARE-UPDATE)
+- [x] [01-Basic-Test](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/01-Basic-Test.ino)
+- [x] [02-Word-Display](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/02-Word-Display.ino)
+- [x] [03-Thermometer-Celsius](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/03-Thermometer-Celsius.ino)
+- [ ] 04-Thermometer-Celsius-Humidity - to do
+- [x] [05-Thermometer-Fahrenheit](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/05-Thermometer-Fahrenheit.ino)
+- [ ] 06-Thermometer-Fahrenheit-Humidity - to do
+- [x] [07-Classic-Clock-24-Hour](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/07-Classic-Clock-24-Hour.ino)
+- [x] [08-Classic-Clock-12-Hour](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/08-Classic-Clock-12-Hour.ino)
+- [ ] 09-Classic-Clock-24-Hour-Thermometer-Celsius-Humidity - to do
+- [ ] 10-Classic-Clock-24-Hour-Thermometer-Fahrenheit-Humidity - to do
+- [ ] 11-Classic-Clock-12-Hour-Thermometer-Celsius-Humidity - to do 
+- [ ] 12-Classic-Clock-12-Hour-Thermometer-Fahrenheit-Humidity - to do
 
 ### Setup
 - [Assembly Instructions](https://bit.ly/Flip-Disc-Clock-Assembly)

@@ -1,13 +1,12 @@
 ## 7-Segment Flip-disc Clock & Thermometer & Hygrometer
 
 ### Clock Power Supply
-```
-The clock requires a good quality external 12V (minimum 1.5A) power supply, 
-5.5mm diameter plug, 2.1mm center pin positive +.
-```
+> [!IMPORTANT]
+> The clock requires a good quality external 12V (minimum 1.5A) power supply, 5.5mm diameter plug, 2.1mm center pin positive +.
 
 ### Firmware Update
-- [Attention!!! - Firmware Update Instructions](https://bit.ly/4x7SEG-CLOCK-FIRMWARE-UPDATE)
+> [!NOTE]
+> [Firmware Update Instructions](https://bit.ly/4x7SEG-CLOCK-FIRMWARE-UPDATE)
 - [x] [01-Basic-Test](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/01-Basic-Test.ino)
 - [x] [02-Word-Display](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/02-Word-Display.ino)
 - [x] [03-Thermometer-Celsius](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/03-Thermometer-Celsius.ino)

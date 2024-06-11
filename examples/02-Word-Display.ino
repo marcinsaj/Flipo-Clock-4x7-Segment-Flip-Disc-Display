@@ -5,6 +5,8 @@
  * Word Display                                                                                  *
  * This example shows how to display 4-letter words on displays                                  *
  *                                                                                               *
+ * Attention!!! - Firmware Update Instructions - https://bit.ly/4x7SEG-CLOCK-FIRMWARE-UPDATE     *
+ *                                                                                               *
  * Setup:                                                                                        *
  * Assembly Instructions - https://bit.ly/Flip-Disc-Clock-Assembly                               *
  * Clock Diagram - https://bit.ly/4x7SEG-CLOCK-DIAGRAM                                           *

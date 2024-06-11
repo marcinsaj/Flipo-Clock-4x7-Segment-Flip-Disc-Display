@@ -10,7 +10,7 @@
   - [05-Thermometer-Fahrenheit](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/05-Thermometer-Fahrenheit.ino)
   - 06-Thermometer-Fahrenheit-Humidity - to do
   - [07-Classic-Clock-24-Hour](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/07-Classic-Clock-24-Hour.ino)
-  - [08-Classic-Clock-12-Hour]()
+  - [08-Classic-Clock-12-Hour](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/08-Classic-Clock-12-Hour.ino)
 
 ### Setup
 - [Assembly Instructions](https://bit.ly/Flip-Disc-Clock-Assembly)

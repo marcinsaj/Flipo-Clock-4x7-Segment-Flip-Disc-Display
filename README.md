@@ -26,5 +26,8 @@
 - [RTC Real Time Clock RX8025T](https://bit.ly/RX8025T)
 - [Temperature Sensor DHT22](https://bit.ly/DHT22)
 
+### Crowdfunding Project
+- [Kickstarter](https://www.kickstarter.com/projects/marcinsaj/flip-disc-displays-arduino-based)
+- [Indiegogo](https://www.indiegogo.com/projects/flip-disc-clock-arduino-based)
 <p> </p>
 <p align="center"><img src="https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/extras/flip-disc-clock-4x7-segment-github-cover.jpg"></p>

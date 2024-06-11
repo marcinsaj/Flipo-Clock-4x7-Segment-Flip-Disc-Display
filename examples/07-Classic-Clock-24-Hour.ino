@@ -313,9 +313,6 @@ void DisplayTime(void)
   Serial.print(":");
   if(tm.Minute < 10) Serial.print("0");
   Serial.print(tm.Minute);
-  Serial.print(":");
-  if(tm.Second < 10) Serial.print("0");
-  Serial.println(tm.Second); 
 
   /* The delay effect is used only when displaying time. 
   During time settings, the delay is 0. */

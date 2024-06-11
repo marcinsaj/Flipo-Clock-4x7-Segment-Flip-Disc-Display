@@ -3,6 +3,8 @@
 ### Firmware Update
 - [Attention!!! - Firmware Update Instructions](https://bit.ly/4x7SEG-CLOCK-FIRMWARE-UPDATE)
 - [Code Examples](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/tree/main/examples)
+-- [Code Examples](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/tree/main/examples)
+-- [Code Examples](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/tree/main/examples)  
 
 ### Basic Instructions
 - [Assembly Instructions](https://bit.ly/Flip-Disc-Clock-Assembly)

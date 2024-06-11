@@ -16,6 +16,10 @@ The clock requires a good quality external 12V (minimum 1.5A) power supply,
 - 06-Thermometer-Fahrenheit-Humidity - to do
 - [07-Classic-Clock-24-Hour](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/07-Classic-Clock-24-Hour.ino)
 - [08-Classic-Clock-12-Hour](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/08-Classic-Clock-12-Hour.ino)
+- 09-Classic-Clock-24-Hour-Thermometer-Celsius-Humidity - to do
+- 10-Classic-Clock-24-Hour-Thermometer-Fahrenheit-Humidity - to do
+- 11-Classic-Clock-12-Hour-Thermometer-Celsius-Humidity - to do 
+- 12-Classic-Clock-12-Hour-Thermometer-Fahrenheit-Humidity - to do
 
 ### Setup
 - [Assembly Instructions](https://bit.ly/Flip-Disc-Clock-Assembly)

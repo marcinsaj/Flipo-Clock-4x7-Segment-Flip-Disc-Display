@@ -5,16 +5,17 @@
  * Classic 24-hour Clock                                                                         *
  * This example is used to test clock displays                                                   *
  *                                                                                               *
- * Time Setting Instructions:                                                                    *
+ * Attention!!! - Firmware Update Instructions - https://bit.ly/4x7SEG-CLOCK-FIRMWARE-UPDATE     *
+ * Time Setting Instructions - https://bit.ly/4x7SEG-CLOCK-TIME-SET                              *
  *                                                                                               *
  * Setup:                                                                                        *
  * Assembly Instructions - https://bit.ly/Flip-Disc-Clock-Assembly                               *
- * Clock diagram - https://bit.ly/3RhW7H2                                                        *
+ * Clock Diagram - https://bit.ly/4x7SEG-CLOCK-DIAGRAM                                           *
  * Dedicated Controller - https://bit.ly/AC1-FD                                                  *
  * 7-Segment Flip-disc Display - https://bit.ly/7SEG-FD                                          *
  * 3x1 Flip-disc Display - https://bit.ly/3x1DOT-FD                                              *
  * Arduino Nano Every - https://bit.ly/ARD-EVERY                                                 *
- * RTC real Time Clock RX8025T - https://bit.ly/RX8025T                                          *
+ * RTC Real Time Clock RX8025T - https://bit.ly/RX8025T                                          *
  * Temperature Sensor DHT22 - https://bit.ly/DHT22                                               *
  *-----------------------------------------------------------------------------------------------*/
 

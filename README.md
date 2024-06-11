@@ -7,7 +7,7 @@ The clock requires a good quality external 12V (minimum 1.5A) power supply,
 ```
 
 ### Firmware Update
-- [x] [Attention!!! - Firmware Update Instructions](https://bit.ly/4x7SEG-CLOCK-FIRMWARE-UPDATE)
+- [Attention!!! - Firmware Update Instructions](https://bit.ly/4x7SEG-CLOCK-FIRMWARE-UPDATE)
 - [x] [01-Basic-Test](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/01-Basic-Test.ino)
 - [x] [02-Word-Display](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/02-Word-Display.ino)
 - [x] [03-Thermometer-Celsius](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/03-Thermometer-Celsius.ino)

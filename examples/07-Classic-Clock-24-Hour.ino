@@ -282,7 +282,7 @@ void SetTime(void)
   We are only interested in hours and minutes */
   setTime(hour_time, minute_time, 0, 1, 1, 1);
 
-  //Set the RTC from the system time
+  /* Set the RTC from the system time */
   RTC_RX8025T.set(now());
 }
 
@@ -336,7 +336,6 @@ bool decButtonPressed(void)
 /* Function that handles the interrupt from pressing the middle button */
 void setButtonPressedISR(void) 
 {
-  
   /* Setting the middle button press flag*/
   setButtonPressedStatus = true;
 

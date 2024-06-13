@@ -21,8 +21,9 @@
 - [ ] 12-Classic-Clock-12-Hour-Thermometer-Fahrenheit-Humidity - to do
 
 ### Setup
-- [Assembly Instructions](https://bit.ly/Flip-Disc-Clock-Assembly)
 - [Basic Setup](https://bit.ly/4x7SEG-CLOCK-BASIC-SETUP)
+- [Assembly Instructions - YouTube](https://youtu.be/WfsLnRaAHXM)
+- [Assembly Instructions - pdf](https://bit.ly/Flip-Disc-Clock-Assembly)
 - [Time Settings Instructions](https://bit.ly/4x7SEG-CLOCK-TIME-SET)
 
 ### Datasheet

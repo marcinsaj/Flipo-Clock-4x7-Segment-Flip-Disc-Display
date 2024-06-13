@@ -228,7 +228,7 @@ void HandlingButtons(void)
       /* Third digit always from 0 to 5 */
       if(digit[2] > 5) digit[2] = 0;
 
-      /* Third digit always from 0 to 9 */
+      /* Fourth digit always from 0 to 9 */
       if(digit[3] > 9) digit[3] = 0;
 
       /* Delay for easiest correct button operation */
@@ -256,7 +256,7 @@ void HandlingButtons(void)
       /* Third digit always from 0 to 5 */
       if(digit[2] < 0) digit[2] = 5;
 
-      /* Third digit always from 0 to 9 */
+      /* Fourth digit always from 0 to 9 */
       if(digit[3] < 0) digit[3] = 9;      
 
       /* Delay for easiest correct button operation */

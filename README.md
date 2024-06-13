@@ -24,6 +24,7 @@
 - [Basic Setup](https://bit.ly/4x7SEG-CLOCK-BASIC-SETUP)
 - [Assembly Instructions - YouTube](https://youtu.be/WfsLnRaAHXM)
 - [Assembly Instructions - pdf](https://bit.ly/Flip-Disc-Clock-Assembly)
+- [Optional Wall Instalation](https://bit.ly/FDC-WALL)
 - [Time Settings Instructions](https://bit.ly/4x7SEG-CLOCK-TIME-SET)
 
 ### Datasheet

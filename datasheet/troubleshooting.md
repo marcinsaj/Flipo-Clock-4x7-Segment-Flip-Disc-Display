@@ -1,3 +1,3 @@
 to do.
-> **Tip**   
+> **TIP**   
 > Displays

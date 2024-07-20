@@ -1,5 +1,9 @@
 ## 7-Segment Flip-disc Clock & Thermometer & Hygrometer
 
+### Troubleshooting
+> [!CAUTION]
+> If you have any problem with the clock, displays or the casing, [find the solution here](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/datasheet/troubleshooting.md)
+
 ### Clock Power Supply
 > [!IMPORTANT]
 > The clock requires a good quality external 12V (minimum 1.5A) power supply, 5.5mm diameter plug, 2.1mm center pin positive +.

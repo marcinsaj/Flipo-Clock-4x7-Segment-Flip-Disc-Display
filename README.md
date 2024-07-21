@@ -3,11 +3,12 @@
 ### Troubleshooting
 > [!CAUTION]
 > If you have any problem with the clock, displays or the casing, [find the solution here](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/datasheet/troubleshooting.md).
-
+---
 
 ### Clock Power Supply
 > [!IMPORTANT]
 > The clock requires a good quality external 12V (minimum 1.5A) power supply, 5.5mm diameter plug, 2.1mm center pin positive +.
+---
 
 ### Firmware Update
 > [!NOTE]
@@ -24,6 +25,7 @@
 - [ ] 10-Classic-Clock-24-Hour-Thermometer-Fahrenheit-Humidity - to do
 - [ ] 11-Classic-Clock-12-Hour-Thermometer-Celsius-Humidity - to do 
 - [ ] 12-Classic-Clock-12-Hour-Thermometer-Fahrenheit-Humidity - to do
+---
 
 ### Setup
 - [Basic Setup](https://bit.ly/4x7SEG-CLOCK-BASIC-SETUP)
@@ -31,6 +33,7 @@
 - [Assembly Instructions - pdf](https://bit.ly/Flip-Disc-Clock-Assembly)
 - [Optional Wall Instalation](https://bit.ly/FDC-WALL)
 - [Time Settings Instructions](https://bit.ly/4x7SEG-CLOCK-TIME-SET)
+---
 
 ### Datasheet
 - [Clock Diagram](https://bit.ly/4x7SEG-CLOCK-DIAGRAM)
@@ -40,6 +43,7 @@
 - [Arduino Nano Every](https://bit.ly/ARD-EVERY)
 - [RTC Real Time Clock RX8025T](https://bit.ly/RX8025T)
 - [Temperature Sensor DHT22](https://bit.ly/DHT22)
+---
 
 ### Crowdfunding Project
 - [Kickstarter](https://www.kickstarter.com/projects/marcinsaj/flip-disc-displays-arduino-based)

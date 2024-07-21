@@ -1,7 +1,7 @@
 ## 7-Segment Flip-disc Clock & Thermometer & Hygrometer
 
 ### Troubleshooting
-> [!CAUTION]
+> [!TIP]
 > If you have any problem with the clock, displays or the casing, [find the solution here](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/datasheet/troubleshooting.md).
 ---
 

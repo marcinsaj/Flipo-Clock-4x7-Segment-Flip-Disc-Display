@@ -13,7 +13,7 @@
 ---
 ### Several discs do not rotate.   
 > [!TIP]  
-> In most cases, this is caused by the discs getting stuck on parts of the casing. Simply unscrew the top of the casing and the rectangular parts inside the displays and slide them so that the discs are unlocked. It can also happen that the clock works without problems in the horizontal position, but in the vertical position several discs are blocked. In the vertical position, the discs fall slightly downward and can get stuck on parts of the casing.
+> In most cases, this is caused by the discs getting stuck on parts of the casing. It can also happen that the clock works without problems in the horizontal position, but in the vertical position several discs are blocked. In the vertical position, the discs fall slightly downward and can get stuck on parts of the casing. Simply unscrew the top of the casing and the rectangular parts inside the displays and slide them so that the discs are unlocked.
 ---
 ### The disc fell off the display    
 > [!TIP]  

@@ -7,7 +7,7 @@
 > [!TIP]
 > - The most common cause is inaccurate soldering. Resolder connectors and use a multimeter and check that the connectors of the controller and the displays are connected
 > - Check the power supply, you should use a 12V 1.5A (center pin positive plus, 5.5mm plug diameter)
-> - Check if you are using the correct repository
+> - Check if you are using the correct [repository](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/tree/main/examples)
 > - Check the control pin declarations in the code and documentation.
 > - Check that you have declared the displays chain correctly (Flip.Init) 
 ---

@@ -272,7 +272,7 @@ void SettingTime(void)
       if(time_settings_level > 4) time_settings_level = 0;
 
       // If the first digit is 1 then the second digit 
-      // cannot be greater than 2 because the largest possible hour is 12
+      // cannot be greater than 2, because the largest possible hour is 12.
       // It may happen that the original time was set to e.g. 09:00, 
       // so when setting the time it could happen that in the 12-hour format
       // we would have the time incorrectly set to 19:00.

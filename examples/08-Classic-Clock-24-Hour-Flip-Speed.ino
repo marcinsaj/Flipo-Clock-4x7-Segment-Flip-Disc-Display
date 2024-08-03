@@ -2,9 +2,10 @@
  * 7-Segment Flip-disc Clock by Marcin Saj https://flipo.io                                      *
  * https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display                        *
  *                                                                                               *
- * Classic 24-hour Clock                                                                         *
+ * Classic 24-hour Clock + Time Settings + Flip Disc Speed/Delay Settings                        *
  *                                                                                               *
  * Attention!!! - Firmware Update Instructions - https://bit.ly/4x7SEG-CLOCK-FIRMWARE-UPDATE     *
+ * Flip Disc Speed/Delay Settings Instructions - https://bit.ly/4x7SEG-CLOCK-SPEED-SET           *
  * Time Setting Instructions - https://bit.ly/4x7SEG-CLOCK-TIME-SET                              *
  *                                                                                               *
  * Setup:                                                                                        *

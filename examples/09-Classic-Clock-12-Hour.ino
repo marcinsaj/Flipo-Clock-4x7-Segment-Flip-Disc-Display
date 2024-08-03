@@ -23,7 +23,6 @@
 #include <TimeLib.h>          // https://github.com/PaulStoffregen/Time
 #include <Wire.h>             // https://arduino.cc/en/Reference/Wire (included with Arduino IDE)
 #include <OneButton.h>        // https://github.com/mathertel/OneButton
-#include <EEPROM.h>
 
 /************************************************************************************************/
 // Set the delay effect between flip discs. Recommended delay range: 0 - 100ms, max 255ms

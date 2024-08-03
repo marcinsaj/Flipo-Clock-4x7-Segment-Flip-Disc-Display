@@ -21,7 +21,7 @@
 - [x] [05-Thermometer-Fahrenheit](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/05-Thermometer-Fahrenheit.ino)
 - [x] [06-Thermometer-Fahrenheit-Humidity](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/06-Thermometer-Fahrenheit-Humidity.ino)
 - [x] [07-Classic-Clock-24-Hour](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/07-Classic-Clock-24-Hour.ino)
-- [ ] 08-Classic-Clock-24-Hour-Flip-Speed - to do
+- [x] [08-Classic-Clock-24-Hour-Flip-Speed](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/08-Classic-Clock-24-Hour-Flip-Speed.ino)
 - [x] [09-Classic-Clock-12-Hour](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/09-Classic-Clock-12-Hour.ino)
 - [ ] 10-Classic-Clock-12-Hour-Flip-Speed - to do
 - [ ] 11-Classic-Clock-24-Hour-Thermometer-Celsius-Humidity - to do

@@ -17,7 +17,7 @@
 - [x] [01-Basic-Test](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/01-Basic-Test.ino)
 - [x] [02-Word-Display](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/02-Word-Display.ino)
 - [x] [03-Thermometer-Celsius](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/03-Thermometer-Celsius.ino)
-- [ ] 04-Thermometer-Celsius-Humidity - to do
+- [ ] [04-Thermometer-Celsius-Humidity](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/04-Thermometer-Celsius-Humidity.ino)
 - [x] [05-Thermometer-Fahrenheit](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/05-Thermometer-Fahrenheit.ino)
 - [ ] 06-Thermometer-Fahrenheit-Humidity - to do
 - [x] [07-Classic-Clock-24-Hour](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/07-Classic-Clock-24-Hour.ino)

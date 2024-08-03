@@ -113,6 +113,8 @@ void setup()
   // - D3X1 - 3x1 display
   Flip.Init(D7SEG, D7SEG, D3X1, D7SEG, D7SEG);
 
+  delay(2000);
+  
   // Function allows you to control one, two or three discs of the selected D3X1 display.
   // - Flip.Display_3x1(module_number, disc1, disc2, disc3);
   Flip.Display_3x1(1, 0,0,0);

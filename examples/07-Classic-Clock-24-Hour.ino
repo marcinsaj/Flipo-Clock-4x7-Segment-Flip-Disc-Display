@@ -124,9 +124,6 @@ void setup()
   Flip.Matrix_7Seg(D,I,S,C);
   delay(1500);
 
-  // The function is used to turn off (clear) all displays
-  Flip.Clear();
-
   // Link the button 1 functions
   button1.attachClick(ShortPressButton1);
 

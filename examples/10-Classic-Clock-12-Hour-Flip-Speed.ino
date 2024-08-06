@@ -96,8 +96,7 @@ void setup()
 {
   Serial.begin(9600);
   
-  // Required for Arduino Nano ESP32
-  // Initialize EEPROM with predefined size
+  // Required for Arduino Nano ESP32, initialize EEPROM with predefined size
   #if defined(ARDUINO_ARCH_ESP32)
     EEPROM.begin(eeprom_size);
   #endif  

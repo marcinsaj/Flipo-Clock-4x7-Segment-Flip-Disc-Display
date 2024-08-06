@@ -2,7 +2,7 @@
  * 7-Segment Flip-disc Clock by Marcin Saj https://flipo.io                                      *
  * https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display                        *
  *                                                                                               *
- * Classic 12-hour Clock + Time Settings + Flip Disc Speed/Delay Settings                        *
+ * Classic 24-hour Clock + Time Settings + Flip Disc Speed/Delay Settings                        *
  *                                                                                               *
  * Attention!!! - Firmware Update Instructions - https://bit.ly/4x7SEG-CLOCK-FIRMWARE-UPDATE     *
  * Flip Disc Speed/Delay Settings Instructions - https://bit.ly/4x7SEG-CLOCK-SPEED-SET           *
@@ -79,7 +79,7 @@ int flipSpeed[7] = {0, 5, 10, 25, 50, 75, 99};
 uint8_t flip_disc_delay_time = 0;
 
 // Eeprom address where the disc delay/speed value is stored
-static const uint16_t eeprom_address = 0;
+static const uint8_t eeprom_address = 0;
 /************************************************************************************************/
 
 void rtcInterruptISR(void)
@@ -140,16 +140,10 @@ void setup()
   Flip.Matrix_7Seg(D,I,S,C);
   delay(1500);
 
-  // Link the button 1 functions
+  // Link the button functions
   button1.attachClick(ShortPressButton1);
-
-  // Link the button 3 function
   button3.attachClick(ShortPressButton3);
-
-  // Link the button 1 function
   button1.attachLongPressStart(LongPressButton1);
-
-  // Link the button 2 function
   button2.attachLongPressStart(LongPressButton2);
 
   Serial.println("Flip-disc 7-Segment Clock");
@@ -157,8 +151,25 @@ void setup()
   // Read disc speed/delay value from eeprom memory
   flip_disc_delay_time = EEPROM.read(eeprom_address);
 
-  // Set disc speed/delay value
-  Flip.Delay(flip_disc_delay_time);
+  bool success_reading = false;
+
+  // Check if the data read from memory is correct, 
+  // if it is one of the defined values ​​0, 5, 10, 25, 50, 75, 99ms
+  for (int i = 0; i < 7; i++)
+  {
+    if(flip_disc_delay_time == flipSpeed[i]) success_reading = true;
+  }
+
+  // If the read value is correct, set the speed/delay effect according to the read value
+  if(success_reading == true) 
+  {
+    Flip.Delay(flip_disc_delay_time);
+  }
+  else // If the data is incorrect, reset the time for the speed/delay effect
+  {
+    flip_disc_delay_time = 0;
+    Flip.Delay(flip_disc_delay_time);  
+  }
 
   DisplayTime();
 }
@@ -176,7 +187,7 @@ void DisplayTime(void)
 {
   // The function is used to set the delay effect between flip discs. 
   // The default value without calling the function is 0. Can be called multiple times 
-  // anywhere in the code. Recommended delay range: 0 - 100ms, max 255ms */
+  // anywhere in the code. Recommended delay range: 0 - 100ms, max 255ms
   Flip.Delay(flip_disc_delay_time);
   
   // Get the time from the RTC and save it to the tm structure
@@ -201,15 +212,11 @@ void DisplayTime(void)
   
   // Print time to the serial monitor
   Serial.print("Time: ");
-  if(tm.Hour < 10) Serial.print("0");
-  Serial.print(tm.Hour);
+  if(hour_time < 10) Serial.print("0");
+  Serial.print(hour_time);
   Serial.print(":");
-  if(tm.Minute < 10) Serial.print("0");
-  Serial.println(tm.Minute);
-
-  // The delay effect is used only when displaying time 
-  // During time settings, the delay is 0
-  Flip.Delay(0);
+  if(minute_time < 10) Serial.print("0");
+  Serial.println(minute_time);
 
   // Clear the flag
   timeDisplayStatus = false;
@@ -218,14 +225,20 @@ void DisplayTime(void)
 void SettingTime(void)
 {
   ClearPressButtonFlags();
-
   modeSettingsStatus = true;
 
   uint8_t time_settings_level = 1;
+
+  // The speed/delay effect is used only when displaying the time 
+  // During time settings, the default value is 0
+  Flip.Delay(0);
   
   Flip.Display_3x1(1, 0,0,0); // Clear the dots
   Flip.Matrix_7Seg(T,I,M,E);
   delay(1500);
+  
+  // Clear digit[] before setting the time
+  for(int i = 0; i < 4; i++) digit[i] = 0;
   
   // Display the first digit to set
   Flip.Matrix_7Seg(digit[0],HLM,HLM,HLM);
@@ -249,8 +262,8 @@ void SettingTime(void)
         if(digit[digit_number] < 0) digit[digit_number] = 1;
         if(digit[digit_number] > 1) digit[digit_number] = 0;
       }
-    
-      // Second digit: 0-9
+
+      // Second digit: 0-9 or 0-2
       if(time_settings_level == 2)
       {
         // If the first digit is 0 then the second digit can be from 0 to 9
@@ -274,18 +287,18 @@ void SettingTime(void)
       {
         if(digit[digit_number] < 0) digit[digit_number] = 5;
         if(digit[digit_number] > 5) digit[digit_number] = 0;
-      }     
+      }
 
       // Fourth digit: 0-9
       if(time_settings_level == 4)
       {
         if(digit[digit_number] < 0) digit[digit_number] = 9;
         if(digit[digit_number] > 9) digit[digit_number] = 0;
-      }
+      }          
 
       // Update the display for only the currently set digit,
       // for more details see FlipDisc.h library
-      Flip.Display_7Seg(time_settings_level, digit[time_settings_level - 1]);  
+      Flip.Display_7Seg(time_settings_level, digit[digit_number]);  
 
       ClearPressButtonFlags();
     }
@@ -295,19 +308,7 @@ void SettingTime(void)
       time_settings_level = time_settings_level + 1;
       if(time_settings_level > 4) time_settings_level = 0;
 
-      // If the first digit is 1 then the second digit 
-      // cannot be greater than 2, because the largest possible hour is 12.
-      // It may happen that the original time was set to e.g. 09:00, 
-      // so when setting the time it could happen that in the 12-hour format
-      // we would have the time incorrectly set to 19:00.
-      // Therefore, if the first digit is 1 and the second digit 
-      // of the old set time is greater than 2, it will be set to 0 by default
-      if(time_settings_level == 2) 
-      {
-        if(digit[0] == 1 && digit[1] > 2) digit[1] = 0; 
-        Flip.Matrix_7Seg(HLM,digit[1],HLM,HLM);
-      }
-
+      if(time_settings_level == 2) Flip.Matrix_7Seg(HLM,digit[1],HLM,HLM);
       if(time_settings_level == 3) Flip.Matrix_7Seg(HLM,HLM,digit[2],HLM);
       if(time_settings_level == 4) Flip.Matrix_7Seg(HLM,HLM,HLM,digit[3]);
     
@@ -334,15 +335,15 @@ void SettingTime(void)
 
 void SettingSpeed(void)
 {
-  ClearPressButtonFlags();
-  
+  ClearPressButtonFlags(); 
   modeSettingsStatus = true;
 
   int speed_index = 0;
   
-  // The delay/speed effect is used only when displaying the time 
-  // During delay/speed settings, the default value is 0
-  Flip.Delay(0);
+  // The delay/speed effect is used only when displaying the time,
+  // during delay/speed settings, the default value is 0
+  flip_disc_delay_time = 0;
+  Flip.Delay(flip_disc_delay_time);
 
   Flip.Display_3x1(1, 1,0,1); // Clear the dots
   Flip.Matrix_7Seg(S,P,E,D);
@@ -365,11 +366,11 @@ void SettingSpeed(void)
       if(speed_index > 6) speed_index = 0;
       if(speed_index < 0) speed_index = 6;
 
-      uint8_t digit3 = (flipSpeed[speed_index] / 10) % 10;
-      uint8_t digit4 = (flipSpeed[speed_index] / 1 ) % 10;
-
       flip_disc_delay_time = flipSpeed[speed_index];
       Flip.Delay(flip_disc_delay_time);
+
+      uint8_t digit3 = (flip_disc_delay_time / 10) % 10;
+      uint8_t digit4 = (flip_disc_delay_time / 1 ) % 10;
 
       Flip.Display_7Seg(3, digit3);
       Flip.Display_7Seg(4, digit4);
@@ -407,13 +408,13 @@ void WatchButtons(void)
   button2.tick();
   button3.tick();
 
-  // If the time settings are not currently active and a long press of the middle button is detected, 
-  // set the time settings flag
-  if(modeSettingsStatus == false && longPressButton2Status == true) timeSettingsStatus = true;
-
-  // If the time settings are not currently active and a long press of the middle button is detected, 
-  // set the time settings flag
-  if(modeSettingsStatus == false && longPressButton1Status == true) speedSettingsStatus = true;  
+  // If the time settings are not currently active,
+  // and if a long press of the middle or top button is detected, set corresponding flag
+  if(modeSettingsStatus == false)
+  {
+    if(longPressButton2Status == true) timeSettingsStatus = true;
+    if(longPressButton1Status == true) speedSettingsStatus = true;
+  }
 }
 
 // Button press handling functions

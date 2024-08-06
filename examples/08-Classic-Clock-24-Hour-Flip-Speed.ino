@@ -78,8 +78,12 @@ int flipSpeed[7] = {0, 5, 10, 25, 50, 75, 99};
 // The value is stored in eeprom memory and read during setup
 uint8_t flip_disc_delay_time = 0;
 
+// Required for EEPROM.begin(eeprom_size) for Arduino Nano ESP32
+static const uint8_t eeprom_size = 1;
+
 // Eeprom address where the disc delay/speed value is stored
 static const uint8_t eeprom_address = 0;
+
 /************************************************************************************************/
 
 void rtcInterruptISR(void)
@@ -91,6 +95,13 @@ void rtcInterruptISR(void)
 void setup() 
 {
   Serial.begin(9600);
+
+  
+  // Required for Arduino Nano ESP32
+  // Initialize EEPROM with predefined size
+  #if defined(ARDUINO_ARCH_ESP32)
+    EEPROM.begin(eeprom_size);
+  #endif
 
   // Attention: do not change! Changing these settings may physical damage the flip-disc displays.
   // Flip.Pin(...); it is the most important function and first to call before everything else. 
@@ -376,6 +387,12 @@ void SettingSpeed(void)
   } while(speedSettingsStatus == true); // Stay in the speed settings until all digits are set 
 
   EEPROM.write(eeprom_address, flip_disc_delay_time);
+  
+  // Required for Arduino Nano ESP32
+  // Saves the changes to the EEPROM
+  #if defined(ARDUINO_ARCH_ESP32)
+    EEPROM.commit(); 
+  #endif
 
   modeSettingsStatus = false;
   timeDisplayStatus = true; 

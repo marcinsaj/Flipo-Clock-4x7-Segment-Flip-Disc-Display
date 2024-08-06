@@ -26,7 +26,7 @@
 
 /************************************************************************************************/
 // Set the delay effect between flip discs. Recommended delay range: 0 - 100ms, max 255ms
-uint8_t flip_disc_delay_time = 50;
+uint8_t flip_disc_delay_time = 25;
 /************************************************************************************************/
 
 // Attention: do not change! Changing these settings may physical damage the flip-disc displays.
@@ -194,6 +194,9 @@ void SettingTime(void)
   Flip.Matrix_7Seg(T,I,M,E);
   delay(1500);
   
+  // Clear digit[] before setting the time
+  for(int i = 0; i < 4; i++) digit[i] = 0;
+  
   // Display the first digit to set
   Flip.Matrix_7Seg(digit[0],HLM,HLM,HLM);
 
@@ -216,24 +219,43 @@ void SettingTime(void)
         if(digit[digit_number] < 0) digit[digit_number] = 2;
         if(digit[digit_number] > 2) digit[digit_number] = 0;
       }
-      
-      // Second and fourth digit: 0-9
-      if(time_settings_level == 2 || time_settings_level == 4)
+
+      // Second digit: 0-9 or 0-3
+      if(time_settings_level == 2)
       {
-        if(digit[digit_number] < 0) digit[digit_number] = 9;
-        if(digit[digit_number] > 9) digit[digit_number] = 0;
+        // If the first digit is 0 or 1 then the second digit can be from 0 to 9
+        if(digit[digit_number-1] != 2)
+        {
+          if(digit[digit_number] < 0) digit[digit_number] = 9;
+          if(digit[digit_number] > 9) digit[digit_number] = 0;
+        }
+
+        // If the first digit is 2 then the second digit 
+        // cannot be greater than 3 because the largest possible hour is 23
+        if(digit[digit_number-1] == 2)
+        {
+          if(digit[digit_number] > 3) digit[digit_number] = 0;
+          if(digit[digit_number] < 0) digit[digit_number] = 3;
+        }
       }
-       
+
       // Third digit: 0-5
       if(time_settings_level == 3)
       {
         if(digit[digit_number] < 0) digit[digit_number] = 5;
         if(digit[digit_number] > 5) digit[digit_number] = 0;
-      }     
+      }
+
+      // Fourth digit: 0-9
+      if(time_settings_level == 4)
+      {
+        if(digit[digit_number] < 0) digit[digit_number] = 9;
+        if(digit[digit_number] > 9) digit[digit_number] = 0;
+      }          
 
       // Update the display for only the currently set digit,
       // for more details see FlipDisc.h library
-      Flip.Display_7Seg(time_settings_level, digit[time_settings_level - 1]);  
+      Flip.Display_7Seg(time_settings_level, digit[digit_number]);  
 
       ClearPressButtonFlags();
     }

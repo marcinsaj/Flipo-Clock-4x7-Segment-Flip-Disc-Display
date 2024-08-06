@@ -177,11 +177,11 @@ void DisplayTime(void)
   
   // Print time to the serial monitor
   Serial.print("Time: ");
-  if(tm.Hour < 10) Serial.print("0");
-  Serial.print(tm.Hour);
+  if(hour_time < 10) Serial.print("0");
+  Serial.print(hour_time);
   Serial.print(":");
-  if(tm.Minute < 10) Serial.print("0");
-  Serial.println(tm.Minute);
+  if(minute_time < 10) Serial.print("0");
+  Serial.println(minute_time);
 
   // The delay effect is used only when displaying the time 
   // During time settings, the delay is 0

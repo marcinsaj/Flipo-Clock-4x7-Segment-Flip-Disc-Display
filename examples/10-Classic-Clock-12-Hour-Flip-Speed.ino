@@ -92,10 +92,6 @@ void setup()
 {
   Serial.begin(9600);
 
-  while (!Serial) {
-    ; // Wait for serial port to connect. Needed for native USB port only
-  }
-
   // Attention: do not change! Changing these settings may physical damage the flip-disc displays.
   // Flip.Pin(...); it is the most important function and first to call before everything else. 
   // The function is used to declare pin functions.

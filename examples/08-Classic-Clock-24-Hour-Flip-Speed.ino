@@ -95,10 +95,8 @@ void rtcInterruptISR(void)
 void setup() 
 {
   Serial.begin(9600);
-
   
-  // Required for Arduino Nano ESP32
-  // Initialize EEPROM with predefined size
+  // Required for Arduino Nano ESP32, initialize EEPROM with predefined size
   #if defined(ARDUINO_ARCH_ESP32)
     EEPROM.begin(eeprom_size);
   #endif
@@ -388,8 +386,7 @@ void SettingSpeed(void)
 
   EEPROM.write(eeprom_address, flip_disc_delay_time);
   
-  // Required for Arduino Nano ESP32
-  // Saves the changes to the EEPROM
+  // Required for Arduino Nano ESP32, saves the changes to the EEPROM
   #if defined(ARDUINO_ARCH_ESP32)
     EEPROM.commit(); 
   #endif

@@ -86,6 +86,11 @@ int digit[4] = {0, 0, 0, 0};
 // Default disc delay/speed values ​​for Flip.Delay(value)
 int flipSpeed[7] = {0, 5, 10, 25, 50, 75, 99};
 
+// Every 30 seconds - temperature and humidity display frequency
+unsigned long temp_display_frequency = 30000;
+unsigned long previous_time = 0;
+unsigned long current_time = 0;
+
 // Aliases for individual option settings
 static const uint8_t HR12 = 0;   // Display time in 12 hour format
 static const uint8_t HR24 = 1;   // Display time in 24 hour format
@@ -229,10 +234,7 @@ void setup()
 void loop(void)
 {
   WatchButtons();
-
-  if(timeDisplayStatus == true) DisplayTime();
-  if(tempDisplayStatus == true) DisplayTemp();
-  
+  DisplayTimeAndTemp();
   
   if(timeSettingsStatus == true) SettingTime();
   if(speedSettingsStatus == true) SettingSpeed();
@@ -241,10 +243,8 @@ void loop(void)
 
 /************************************************************************************************/
 void DisplayTime(void)
-{
+{  
   // The function is used to set the delay effect between flip discs. 
-  // The default value without calling the function is 0. Can be called multiple times 
-  // anywhere in the code. Recommended delay range: 0 - 100ms, max 255ms
   Flip.Delay(flip_disc_delay_time);
   
   // Get the time from the RTC and save it to the tm structure
@@ -278,8 +278,7 @@ void DisplayTime(void)
   if(minute_time < 10) Serial.print("0");
   Serial.println(minute_time);
 
-  // Clear the flag
-  timeDisplayStatus = false;
+  timeDisplayStatus = false; // Clear the flag
 }
 
 
@@ -300,11 +299,51 @@ void DisplayTime(void)
 
 
 
+void DisplayTimeAndTemp(void)
+{
+  // display time
+  // wait 3 seconds
+  // display temp
+  // wait 3 seconds
+  // display humidity
+  // wait 3 seconds
+  // display time
+
+  // If the temperature display frequency is set to 30 seconds, start the timer
+  //if(temp_fq == TPFQ30) currentTime = millis();
+  //tempDisplayStatus = true;  // Display temperature
+
+
+
+  //if (currentMillis - previousMillis >= interval) {
+    // save the last time you blinked the LED
+    //previousMillis = currentMillis;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /************************************************************************************************/
 void DisplayTemp(void)
 {
+  // The function is used to set the delay effect between flip discs. 
+  Flip.Delay(flip_disc_delay_time);
 
+  
+
+  tempDisplayStatus = false; // Clear the flag
+  timeDisplayStatus = true;  // Display time
 }
 
 

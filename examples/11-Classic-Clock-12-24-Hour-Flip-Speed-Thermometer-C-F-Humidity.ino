@@ -123,6 +123,7 @@ void rtcInterruptISR(void)
   if(timeSettingsStatus == false) timeDisplayStatus = true; 
 }
 
+/************************************************************************************************/
 void setup() 
 {
   Serial.begin(9600);
@@ -163,8 +164,9 @@ void setup()
   // - D3X1 - 3x1 display
   Flip.Init(D7SEG, D7SEG, D3X1, D7SEG, D7SEG);
 
-  delay(2000);
-  
+  delay(3000); 
+  Serial.println("FLIP DISC 7-SEGMENT CLOCK");
+
   // Function allows you to control one, two or three discs of the selected D3X1 display.
   // - Flip.Display_3x1(module_number, disc1, disc2, disc3);
   Flip.Display_3x1(1, 0,0,0);
@@ -182,8 +184,6 @@ void setup()
   button1.attachLongPressStart(LongPressButton1);
   button2.attachLongPressStart(LongPressButton2);
   button3.attachLongPressStart(LongPressButton3);
-
-  Serial.println("Flip-disc 7-Segment Clock");
 
   // Read disc speed/delay value from eeprom memory
   flip_disc_delay_time = EEPROM.read(ee_delay_address);
@@ -225,6 +225,7 @@ void setup()
   DisplayTime();
 }
 
+/************************************************************************************************/
 void loop(void)
 {
   WatchButtons();
@@ -238,6 +239,7 @@ void loop(void)
   if(tempSettingsStatus == true) SettingTemp();
 }
 
+/************************************************************************************************/
 void DisplayTime(void)
 {
   // The function is used to set the delay effect between flip discs. 
@@ -269,7 +271,7 @@ void DisplayTime(void)
   Flip.Matrix_7Seg(digit[0],digit[1],digit[2],digit[3]);
   
   // Print time to the serial monitor
-  Serial.print("Time: ");
+  Serial.print("TIME: ");
   if(hour_time < 10) Serial.print("0");
   Serial.print(hour_time);
   Serial.print(":");
@@ -280,32 +282,78 @@ void DisplayTime(void)
   timeDisplayStatus = false;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/************************************************************************************************/
 void DisplayTemp(void)
 {
 
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/************************************************************************************************/
 void SettingTime(void)
 {
   ClearPressButtonFlags();
   modeSettingsStatus = true;
 
+  time_hr = HR12; // After entering the setting, the time format is set to 12 hours by default
   uint8_t time_settings_level = 0;
+  bool set_value = time_hr; 
 
   // The speed/delay effect is used only when displaying the time 
   // During time settings, the default value is 0
   Flip.Delay(0);
 
+  Serial.println();
+  Serial.println("TIME FORMAT SETTINGS");
+
   Flip.Matrix_7Seg(H,O,U,R);
   Flip.Display_3x1(1, 0,0,0); // Clear the dots
   delay(1500);
   
+  Serial.println("Time format: 12-hour");  
   Flip.Display_3x1(1, 1,1,0); // Set the dots
-
-  if(time_hr == HR12) Flip.Matrix_7Seg(H,R,1,2);
-  if(time_hr == HR24) Flip.Matrix_7Seg(H,R,2,4);
-
-  bool set_value = time_hr;
+  Flip.Matrix_7Seg(H,R,1,2);
 
   do
   {
@@ -316,11 +364,12 @@ void SettingTime(void)
       set_value = !set_value;
 
       // Update the display
-      if(set_value == 0) {time_hr = HR12; Flip.Matrix_7Seg(H,R,1,2);}
-      if(set_value == 1) {time_hr = HR24; Flip.Matrix_7Seg(H,R,2,4);}
+      Serial.print("Time format: ");
+      if(set_value == 0) {time_hr = HR12; Flip.Matrix_7Seg(H,R,1,2); Serial.println("12-hour");}
+      if(set_value == 1) {time_hr = HR24; Flip.Matrix_7Seg(H,R,2,4); Serial.println("24-hour");}
     } 
 
-    if(longPressButton2Status == true) time_settings_level = 1; 
+    if(longPressButton2Status == true) {time_settings_level = 1;} 
 
     ClearPressButtonFlags();
 
@@ -343,8 +392,11 @@ void SettingTime(void)
   // Display the first digit to set
   Flip.Matrix_7Seg(digit[0],HLM,HLM,HLM);
 
-  // Stay in the time settings until all digits are set
-  do
+  Serial.println();
+  Serial.println("TIME SETTINGS");
+  Serial.println("0---");
+
+  do  // Stay in the time settings until all digits are set
   {
     WatchButtons();
     
@@ -363,6 +415,7 @@ void SettingTime(void)
         {
           if(digit[digit_number] < 0) digit[digit_number] = 1;
           if(digit[digit_number] > 1) digit[digit_number] = 0;
+          Serial.print(digit[0]); Serial.println("---");
         }
 
         // Second digit: 0-9 or 0-2
@@ -373,7 +426,7 @@ void SettingTime(void)
           {
            if(digit[digit_number] < 0) digit[digit_number] = 9;
            if(digit[digit_number] > 9) digit[digit_number] = 0;
-         }
+          }
 
           // If the first digit is 1 then the second digit 
           // cannot be greater than 2 because the largest possible hour is 12
@@ -382,6 +435,9 @@ void SettingTime(void)
             if(digit[digit_number] > 2) digit[digit_number] = 0;
             if(digit[digit_number] < 0) digit[digit_number] = 2;
           }
+
+        Serial.print("-"); Serial.print(digit[1]); Serial.println("--");
+          
         }
       }
 
@@ -392,6 +448,7 @@ void SettingTime(void)
         {
           if(digit[digit_number] < 0) digit[digit_number] = 2;
           if(digit[digit_number] > 2) digit[digit_number] = 0;
+          Serial.print(digit[0]); Serial.println("---");
         }
 
         // Second digit: 0-9 or 0-3
@@ -411,6 +468,9 @@ void SettingTime(void)
             if(digit[digit_number] > 3) digit[digit_number] = 0;
             if(digit[digit_number] < 0) digit[digit_number] = 3;
           }
+
+        Serial.print("-"); Serial.print(digit[1]); Serial.println("--");
+
         }
       }  
 
@@ -419,6 +479,7 @@ void SettingTime(void)
       {
         if(digit[digit_number] < 0) digit[digit_number] = 5;
         if(digit[digit_number] > 5) digit[digit_number] = 0;
+        Serial.print("--"); Serial.print(digit[2]); Serial.println("-");
       }
 
       // Fourth digit: 0-9
@@ -426,6 +487,7 @@ void SettingTime(void)
       {
         if(digit[digit_number] < 0) digit[digit_number] = 9;
         if(digit[digit_number] > 9) digit[digit_number] = 0;
+        Serial.print("---"); Serial.println(digit[3]);
       }          
 
       // Update the display for only the currently set digit,
@@ -440,13 +502,16 @@ void SettingTime(void)
       time_settings_level = time_settings_level + 1;
       if(time_settings_level > 4) time_settings_level = 0;
 
-      if(time_settings_level == 2) Flip.Matrix_7Seg(HLM,digit[1],HLM,HLM);
-      if(time_settings_level == 3) Flip.Matrix_7Seg(HLM,HLM,digit[2],HLM);
-      if(time_settings_level == 4) Flip.Matrix_7Seg(HLM,HLM,HLM,digit[3]);
+      if(time_settings_level == 2) {Flip.Matrix_7Seg(HLM,digit[1],HLM,HLM); Serial.print("-"); Serial.print(digit[1]); Serial.println("--");}
+      if(time_settings_level == 3) {Flip.Matrix_7Seg(HLM,HLM,digit[2],HLM); Serial.print("--"); Serial.print(digit[2]); Serial.println("-");}
+      if(time_settings_level == 4) {Flip.Matrix_7Seg(HLM,HLM,HLM,digit[3]); Serial.print("---"); Serial.println(digit[3]);}
     
       ClearPressButtonFlags();
     }
   } while(time_settings_level != 0); // Stay in the time settings until all digits are set
+  
+  Serial.println("Saving time settings to eeprom memory");
+  Serial.println();
   
   // Convert entered individual digits to the format supported by RTC
   uint8_t hour_time = (digit[0] * 10) + digit[1];
@@ -465,12 +530,16 @@ void SettingTime(void)
   timeDisplayStatus = true;
 }
 
+/************************************************************************************************/
 void SettingSpeed(void)
 {
   ClearPressButtonFlags(); 
   modeSettingsStatus = true;
 
   int speed_index = 0;
+
+  Serial.println();
+  Serial.println("FLIP DISC SPEED/DELAY EFFECT SETTINGS");
   
   // The delay/speed effect is used only when displaying the time,
   // during delay/speed settings, the default value is 0
@@ -480,17 +549,17 @@ void SettingSpeed(void)
   Flip.Display_3x1(1, 1,0,1); // Clear the dots
   Flip.Matrix_7Seg(S,P,E,D);
   delay(1500);
-  
+
   // Display the first digit to set
   Flip.Matrix_7Seg(S,P,0,0);
+  Serial.print("Speed/delay: "); Serial.print("0"); Serial.println("ms"); 
 
-  // Stay in the time settings until all digits are set
-  do
+  do // Stay in the speed/delay settings until the value is set
   {
     WatchButtons();
 
     if(shortPressButton1Status == true || shortPressButton3Status == true)
-    {
+    {      
       // Top button "+1", bottom button "-1"
       if(shortPressButton1Status == true) speed_index++;
       if(shortPressButton3Status == true) speed_index--;
@@ -504,20 +573,26 @@ void SettingSpeed(void)
       uint8_t digit3 = (flip_disc_delay_time / 10) % 10;
       uint8_t digit4 = (flip_disc_delay_time / 1 ) % 10;
 
+      Serial.print("Speed/delay: "); Serial.print(flipSpeed[speed_index]); Serial.println("ms");  
+
       Flip.Display_7Seg(3, digit3);
       Flip.Display_7Seg(4, digit4);
-
+      
       ClearPressButtonFlags();
     }
 
     if(longPressButton2Status == true)
     {
       speedSettingsStatus = false;
+      Serial.println();
       ClearPressButtonFlags();
     }
 
   } while(speedSettingsStatus == true); // Stay in the speed settings until all digits are set 
 
+  Serial.println("Saving flip disc speed/delay effect settings to eeprom memory");
+  Serial.println();
+  
   EEPROM.write(ee_delay_address, flip_disc_delay_time);
   
   // Required for Arduino Nano ESP32, saves the changes to the EEPROM
@@ -529,11 +604,110 @@ void SettingSpeed(void)
   timeDisplayStatus = true; 
 }
 
+/************************************************************************************************/
 void SettingTemp(void)
 {
+  ClearPressButtonFlags();
+  modeSettingsStatus = true;
 
+  // The speed/delay effect is used only when displaying the time 
+  // During time settings, the default value is 0
+  Flip.Delay(0);
+
+  Flip.Matrix_7Seg(T,E,M,P);
+  Flip.Display_3x1(1, 0,0,0); // Clear the dots
+  delay(1500); 
+  Flip.Display_3x1(1, 1,1,0); // Set the dots
+
+  uint8_t temp_settings_level = 1;
+  bool set_value = 0;
+  bool show_current_settings = true;
+
+  Serial.println();
+  Serial.println("TEMPERATURE & HUMIDITY SETTINGS");
+
+  do // Stay in settings until all values are set
+  {
+    WatchButtons();
+
+    if(shortPressButton1Status == true || shortPressButton3Status == true)
+    {
+      set_value = !set_value;
+      show_current_settings = true;
+      ClearPressButtonFlags();
+    }
+
+    if(longPressButton2Status == true)
+    {
+      temp_settings_level++;
+      if(temp_settings_level > 4) tempSettingsStatus = false;
+
+      Serial.println();
+      set_value = 0;
+
+      show_current_settings = true;
+      ClearPressButtonFlags();
+    }
+
+  if(show_current_settings == true)
+  {
+    if(temp_settings_level == 1)
+    {
+      temp_on_off = set_value;
+      Serial.print("Temperature display: ");
+      if(temp_on_off == OFF) {Flip.Matrix_7Seg(T,P,O,F); Serial.println("OFF");}
+      if(temp_on_off == ON) {Flip.Matrix_7Seg(T,P,O,N); Serial.println("ON");}
+    }
+
+    if(temp_settings_level == 2)
+    {
+      temp_c_f = set_value;
+      Serial.print("Temperature: ");
+      if(temp_c_f == TPF) {Flip.Matrix_7Seg(T,P,DEG,F); Serial.println("°F");}
+      if(temp_c_f == TPC) {Flip.Matrix_7Seg(T,P,DEG,C); Serial.println("°C");}
+    }
+
+    if(temp_settings_level == 3)
+    {
+      temp_fq = set_value;
+      Serial.print("Temperature display frequency: "); 
+      if(temp_fq == TPFQ60) {Flip.Matrix_7Seg(T,F,6,0); Serial.println("60 seconds");}
+      if(temp_fq == TPFQ30) {Flip.Matrix_7Seg(T,F,3,0); Serial.println("30 seconds");}
+    }
+
+    if(temp_settings_level == 4)
+    {
+      temp_h_on_off = set_value;
+      Serial.print("Humidity display: ");
+      if(temp_h_on_off == OFF) {Flip.Matrix_7Seg(T,H,O,F); Serial.println("OFF");}
+      if(temp_h_on_off == ON) {Flip.Matrix_7Seg(T,H,O,N); Serial.println("ON");}
+    }
+
+    show_current_settings = false;
+  }  
+
+  } while(tempSettingsStatus == true); // Stay in the speed settings until all digits are set
+
+  Serial.println("Saving temperature & humidity settings to eeprom memory");
+  Serial.println();
+
+/*  
+  // Write setting options into memory
+  EEPROM.write(ee_temp_on_off_address, temp_on_off);
+  EEPROM.write(ee_temp_c_f_address, temp_c_f);
+  EEPROM.write(ee_temp_fq_address, temp_fq);
+  EEPROM.write(ee_temp_h_on_off_address, temp_h_on_off);
+
+  // Required for Arduino Nano ESP32, saves the changes to the EEPROM
+  #if defined(ARDUINO_ARCH_ESP32)
+    EEPROM.commit(); 
+  #endif
+*/
+  modeSettingsStatus = false;
+  timeDisplayStatus = true; 
 }
 
+/************************************************************************************************/
 // Button flags clearing function
 void ClearPressButtonFlags(void)
 {
@@ -544,6 +718,7 @@ void ClearPressButtonFlags(void)
   longPressButton3Status = false;
 }
 
+/************************************************************************************************/
 // Keep watching the buttons
 void WatchButtons(void)
 {
@@ -561,6 +736,7 @@ void WatchButtons(void)
   }
 }
 
+/************************************************************************************************/
 // Button press handling functions
 void ShortPressButton1(void){shortPressButton1Status = true;}
 void ShortPressButton3(void){shortPressButton3Status = true;}

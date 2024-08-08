@@ -334,18 +334,18 @@ void DisplayTemp(void)
 void SettingTime(void)
 {
   ClearPressButtonFlags();
-  modeSettingsStatus = true;
 
+  modeSettingsStatus = true;
   time_hr = HR12; // After entering the setting, the time format is set to 12 hours by default
   uint8_t time_settings_level = 0;
   bool set_value = time_hr; 
 
+  Serial.println();
+  Serial.println("TIME FORMAT SETTINGS");
+
   // The speed/delay effect is used only when displaying the time 
   // During time settings, the default value is 0
   Flip.Delay(0);
-
-  Serial.println();
-  Serial.println("TIME FORMAT SETTINGS");
 
   Flip.Matrix_7Seg(H,O,U,R);
   Flip.Display_3x1(1, 0,0,0); // Clear the dots
@@ -436,8 +436,7 @@ void SettingTime(void)
             if(digit[digit_number] < 0) digit[digit_number] = 2;
           }
 
-        Serial.print("-"); Serial.print(digit[1]); Serial.println("--");
-          
+          Serial.print("-"); Serial.print(digit[1]); Serial.println("--");
         }
       }
 
@@ -469,8 +468,7 @@ void SettingTime(void)
             if(digit[digit_number] < 0) digit[digit_number] = 3;
           }
 
-        Serial.print("-"); Serial.print(digit[1]); Serial.println("--");
-
+          Serial.print("-"); Serial.print(digit[1]); Serial.println("--");
         }
       }  
 
@@ -533,9 +531,9 @@ void SettingTime(void)
 /************************************************************************************************/
 void SettingSpeed(void)
 {
-  ClearPressButtonFlags(); 
-  modeSettingsStatus = true;
+  ClearPressButtonFlags();
 
+  modeSettingsStatus = true;
   int speed_index = 0;
 
   Serial.println();
@@ -608,7 +606,14 @@ void SettingSpeed(void)
 void SettingTemp(void)
 {
   ClearPressButtonFlags();
+
   modeSettingsStatus = true;
+  uint8_t temp_settings_level = 1;
+  bool set_value = 0;
+  bool show_current_settings = true;
+
+  Serial.println();
+  Serial.println("TEMPERATURE & HUMIDITY SETTINGS");
 
   // The speed/delay effect is used only when displaying the time 
   // During time settings, the default value is 0
@@ -618,13 +623,6 @@ void SettingTemp(void)
   Flip.Display_3x1(1, 0,0,0); // Clear the dots
   delay(1500); 
   Flip.Display_3x1(1, 1,1,0); // Set the dots
-
-  uint8_t temp_settings_level = 1;
-  bool set_value = 0;
-  bool show_current_settings = true;
-
-  Serial.println();
-  Serial.println("TEMPERATURE & HUMIDITY SETTINGS");
 
   do // Stay in settings until all values are set
   {

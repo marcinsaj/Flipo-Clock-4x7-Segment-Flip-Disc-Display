@@ -1,5 +1,3 @@
-not ready
-
 /*-----------------------------------------------------------------------------------------------*
  * 7-Segment Flip-disc Clock by Marcin Saj https://flipo.io                                      *
  * https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display                        *
@@ -67,6 +65,9 @@ volatile bool longPressButton1Status = false;
 volatile bool longPressButton2Status = false;
 volatile bool longPressButton3Status = false;
 
+// RTC interrupt flag
+volatile bool interruptRtcStatus = false;
+
 // A flag that stores the time display status, if the flag is set, 
 // the current time will be displayed
 volatile bool timeDisplayStatus = false;
@@ -86,10 +87,24 @@ int digit[4] = {0, 0, 0, 0};
 // Default disc delay/speed values ​​for Flip.Delay(value)
 int flipSpeed[7] = {0, 5, 10, 25, 50, 75, 99};
 
+// How long and after what time from displaying the temperature to display the humidity
+const unsigned long wait_interval = 5000;
+
 // Every 30 seconds - temperature and humidity display frequency
-unsigned long temp_display_frequency = 30000;
-unsigned long previous_time = 0;
-unsigned long current_time = 0;
+const unsigned long sequence_interval = 30000 - 3 * wait_interval;
+
+// Time values for millis()
+unsigned long sequence_start_time = 0;
+unsigned long sequence_current_time = 0;
+
+// Time, temperature and humidity sequence display status flags
+volatile bool sequenceRunning= false;                 // Indicates if the sequence is currently running
+volatile bool sequenceSecondRun = false;           // Flag for second sequence if the temp/hum display interval is set to 30s
+volatile bool firstSequenceComplete = false;           // Flag to indicate the first sequence has completed
+volatile bool secondSequenceComplete = false;          // Flag to indicate the second sequence has completed
+
+// Variable defining the current level of the time/temperature/humidity display sequence
+uint8_t sequence_level = 0;
 
 // Aliases for individual option settings
 static const uint8_t HR12 = 0;   // Display time in 12 hour format
@@ -98,24 +113,30 @@ static const uint8_t OFF = 0;    // Turn ON temperature and humidity display
 static const uint8_t ON = 1;     // Turn OFF temperature and humidity display
 static const uint8_t TPF = 0;    // Temperature in Fahrenheit
 static const uint8_t TPC = 1;    // Temperature in Celsius 
-static const uint8_t TPFQ60 = 0; // Every 60 seconds - temperature and humidity display frequency
-static const uint8_t TPFQ30 = 1; // Every 30 seconds - temperature and humidity display frequency
+static const uint8_t THFQ60 = 0; // Every 60 seconds - temperature and humidity display frequency
+static const uint8_t THFQ30 = 1; // Every 30 seconds - temperature and humidity display frequency
 
 // The values is stored in eeprom memory and read during setup
 volatile uint8_t flip_disc_delay_time = 0; // Flip disc delay/speed effect [ms]
+volatile uint8_t sleep_hour = 0;
+volatile uint8_t wake_hour = 0;
+
 volatile uint8_t time_hr = 0;              // Time 12/24 hour clock
 volatile uint8_t temp_on_off = 0;          // Temperature ON/OFF
 volatile uint8_t temp_c_f = 0;             // Temparature C/F - Celsius/Fahrenheit
-volatile uint8_t temp_fq = 0;              // Temperature and humidity display frequency - 30/60 seconds
-volatile uint8_t temp_h_on_off = 0;        // Humidity ON/OFF
+volatile uint8_t hum_on_off = 0;           // Humidity ON/OFF
+volatile uint8_t temp_hum_fq = 0;              // Temperature and humidity display frequency - 30/60 seconds
 
 // Eeprom addresses where settings are stored
 static const uint16_t ee_delay_address = 0;         // Flip disc delay/speed effect
-static const uint16_t ee_time_hr_address = 1;       // Time 12/24 hour clock   
-static const uint16_t ee_temp_on_off_address = 2;   // Temperature ON/OFF
-static const uint16_t ee_temp_c_f_address = 3;      // Temparature C/F - Celsius/Fahrenheit
-static const uint16_t ee_temp_fq_address = 4;       // Temperature and humidity display frequency - 30/60 seconds
-static const uint16_t ee_temp_h_on_off_address = 5; // Humidity ON/OFF
+static const uint16_t ee_leading_zero_address = 1;
+static const uint16_t ee_sleep_hour_address = 2;
+static const uint16_t ee_wake_hour_address = 3;
+static const uint16_t ee_time_hr_address = 4;       // Time 12/24 hour clock   
+static const uint16_t ee_temp_on_off_address = 5;   // Temperature ON/OFF
+static const uint16_t ee_temp_c_f_address = 6;      // Temparature C/F - Celsius/Fahrenheit
+static const uint16_t ee_hum_on_off_address = 7; // Humidity ON/OFF
+static const uint16_t ee_temp_hum_fq_address = 8;       // Temperature and humidity display frequency - 30/60 seconds
 
 // Required for EEPROM.begin(eeprom_size) for Arduino Nano ESP32
 static const uint8_t eeprom_size = 6;
@@ -124,8 +145,7 @@ static const uint8_t eeprom_size = 6;
 
 void rtcInterruptISR(void)
 {
-  // Set the status of the flag only if we are not in setting mode
-  if(timeSettingsStatus == false) timeDisplayStatus = true; 
+  timeDisplayStatus = true;
 }
 
 /************************************************************************************************/
@@ -217,24 +237,27 @@ void setup()
   time_hr = EEPROM.read(ee_time_hr_address);
   temp_on_off = EEPROM.read(ee_temp_on_off_address);
   temp_c_f = EEPROM.read(ee_temp_c_f_address);
-  temp_fq = EEPROM.read(ee_temp_fq_address);
-  temp_h_on_off = EEPROM.read(ee_temp_h_on_off_address);
+  hum_on_off = EEPROM.read(ee_hum_on_off_address);
+  temp_hum_fq = EEPROM.read(ee_temp_hum_fq_address);
 
   // If the read values ​​are incorrect, set the default values
   if(time_hr != HR12 && time_hr != HR24) time_hr = HR12;                           // Set the time display to 12 hour format
   if(temp_on_off != ON && temp_on_off != OFF) temp_on_off = OFF;                   // Turn off the temperature and humidity display, the other options have no effect
   if(temp_c_f != TPF && temp_c_f != TPC) temp_c_f = TPF;                           // Set temperature display in fahrenheit
-  if(temp_h_on_off != TPFQ60 && temp_h_on_off != TPFQ30) temp_h_on_off = TPFQ60;   // Set the temperature and humidity display frequency to 60 seconds
-  if(temp_h_on_off != ON && temp_h_on_off != OFF) temp_h_on_off = OFF;             // Turn off humidity display
-
-  DisplayTime();
+  if(hum_on_off != ON && hum_on_off != OFF) hum_on_off = OFF;             // Turn off humidity display
+  if(temp_hum_fq != THFQ60 && temp_hum_fq != THFQ30) temp_hum_fq = THFQ60;   // Set the temperature and humidity display frequency to 60 seconds  
+  
+  hum_on_off = ON;
+  temp_on_off = ON;
+  temp_hum_fq = THFQ60;
+DisplayTime();
 }
 
 /************************************************************************************************/
 void loop(void)
 {
   WatchButtons();
-  DisplayTimeAndTemp();
+  if(timeDisplayStatus == true) DisplayTimeAndTemperature();
   
   if(timeSettingsStatus == true) SettingTime();
   if(speedSettingsStatus == true) SettingSpeed();
@@ -277,8 +300,6 @@ void DisplayTime(void)
   Serial.print(":");
   if(minute_time < 10) Serial.print("0");
   Serial.println(minute_time);
-
-  timeDisplayStatus = false; // Clear the flag
 }
 
 
@@ -299,26 +320,108 @@ void DisplayTime(void)
 
 
 
-void DisplayTimeAndTemp(void)
-{
-  // display time
-  // wait 3 seconds
-  // display temp
-  // wait 3 seconds
-  // display humidity
-  // wait 3 seconds
-  // display time
-
-  // If the temperature display frequency is set to 30 seconds, start the timer
-  //if(temp_fq == TPFQ30) currentTime = millis();
-  //tempDisplayStatus = true;  // Display temperature
 
 
 
-  //if (currentMillis - previousMillis >= interval) {
-    // save the last time you blinked the LED
-    //previousMillis = currentMillis;
-}
+
+
+
+void DisplayTimeAndTemperature(void)
+{  
+  // If the sequence is not already running, initialize it
+  if (sequenceRunning == false) 
+  {
+    sequence_start_time = millis(); // Record the start time
+    sequence_level = 0;             // Start from the first state
+    sequenceRunning = true;
+  }
+
+  // Update the current time
+  sequence_current_time = millis();
+
+  switch(sequence_level) 
+  {
+    case 0:
+        DisplayTime();
+        sequence_level = 1;
+        sequence_start_time = sequence_current_time;  // Reset the start time for the next interval
+      break;
+
+    case 1:
+      if(temp_on_off == OFF) sequence_level = 2;
+      else if(temp_on_off == ON)
+      {
+        if(sequence_current_time - sequence_start_time >= wait_interval)
+        {
+          DisplayTemperature();
+          sequence_level = 2; 
+          sequence_start_time = sequence_current_time;  // Reset the start time for the next interval
+        }
+      }
+      break;
+
+    case 2:
+      if(hum_on_off == OFF) sequence_level = 3;
+      else if(hum_on_off == ON)
+      {
+        if(sequence_current_time - sequence_start_time >= wait_interval)
+        {
+          DisplayHumidity();
+          sequence_level = 3; 
+          sequence_start_time = sequence_current_time;  // Reset the start time for the next interval
+        }
+      }
+      break;
+
+    case 3:
+      if(temp_on_off == OFF && hum_on_off == OFF) sequence_level = 5;
+      else
+      {
+        if(sequence_current_time - sequence_start_time >= wait_interval)
+        {
+          DisplayTime();
+
+          if(temp_hum_fq == THFQ30 && sequenceSecondRun == false) 
+          {
+            sequence_level = 4;
+            sequence_start_time = sequence_current_time;  // Reset the start time for the next interval
+          }
+          else sequence_level = 5;
+        }
+      }
+      break;   
+
+    case 4:
+      if(sequence_current_time - sequence_start_time >= sequence_interval)
+      {
+        sequence_level = 1;
+        sequenceSecondRun = true; 
+        sequence_start_time = sequence_current_time;  // Reset the start time for the next interval
+      }
+
+      break; 
+
+    case 5:
+      sequenceRunning = false;
+      sequenceSecondRun = false;
+      timeDisplayStatus = false;
+      break;
+  }
+} 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -335,15 +438,23 @@ void DisplayTimeAndTemp(void)
 
 
 /************************************************************************************************/
-void DisplayTemp(void)
+void DisplayTemperature(void)
 {
   // The function is used to set the delay effect between flip discs. 
   Flip.Delay(flip_disc_delay_time);
+  Flip.Matrix_7Seg(2,3,DEG,C);
+  Serial.println("DisplayTemperature");
 
-  
+}
 
-  tempDisplayStatus = false; // Clear the flag
-  timeDisplayStatus = true;  // Display time
+/************************************************************************************************/
+void DisplayHumidity(void)
+{
+  // The function is used to set the delay effect between flip discs. 
+  Flip.Delay(flip_disc_delay_time);
+  Flip.Matrix_7Seg(5,2,CLR,H);
+  Serial.println("DisplayHumidity");
+
 }
 
 
@@ -374,6 +485,10 @@ void SettingTime(void)
 {
   ClearPressButtonFlags();
 
+  // If the settings were enabled during the time/temperature/humidity sequence, 
+  // we need to reset the sequence flag
+  sequenceRunning = false;
+  
   modeSettingsStatus = true;
   time_hr = HR12; // After entering the setting, the time format is set to 12 hours by default
   uint8_t time_settings_level = 0;
@@ -564,13 +679,18 @@ void SettingTime(void)
   
   timeSettingsStatus = false;
   modeSettingsStatus = false;
-  timeDisplayStatus = true;
+  timeDisplayStatus = false;
+  DisplayTime();
 }
 
 /************************************************************************************************/
 void SettingSpeed(void)
 {
   ClearPressButtonFlags();
+
+  // If the settings were enabled during the time/temperature/humidity sequence, 
+  // we need to reset the sequence flag
+  sequenceRunning = false;
 
   modeSettingsStatus = true;
   int speed_index = 0;
@@ -638,13 +758,18 @@ void SettingSpeed(void)
   #endif
 
   modeSettingsStatus = false;
-  timeDisplayStatus = true; 
+  timeDisplayStatus = false;
+  DisplayTime();
 }
 
 /************************************************************************************************/
 void SettingTemp(void)
 {
   ClearPressButtonFlags();
+
+  // If the settings were enabled during the time/temperature/humidity sequence, 
+  // we need to reset the sequence flag
+  sequenceRunning = false;
 
   modeSettingsStatus = true;
   uint8_t temp_settings_level = 1;
@@ -706,18 +831,18 @@ void SettingTemp(void)
 
     if(temp_settings_level == 3)
     {
-      temp_fq = set_value;
-      Serial.print("Temperature display frequency: "); 
-      if(temp_fq == TPFQ60) {Flip.Matrix_7Seg(T,F,6,0); Serial.println("60 seconds");}
-      if(temp_fq == TPFQ30) {Flip.Matrix_7Seg(T,F,3,0); Serial.println("30 seconds");}
+      hum_on_off = set_value;
+      Serial.print("Humidity display: ");
+      if(hum_on_off == OFF) {Flip.Matrix_7Seg(H,U,O,F); Serial.println("OFF");}
+      if(hum_on_off == ON) {Flip.Matrix_7Seg(H,U,O,N); Serial.println("ON");}
     }
 
     if(temp_settings_level == 4)
     {
-      temp_h_on_off = set_value;
-      Serial.print("Humidity display: ");
-      if(temp_h_on_off == OFF) {Flip.Matrix_7Seg(T,H,O,F); Serial.println("OFF");}
-      if(temp_h_on_off == ON) {Flip.Matrix_7Seg(T,H,O,N); Serial.println("ON");}
+      temp_hum_fq = set_value;
+      Serial.print("Temperature and/or Humidity display frequency: "); 
+      if(temp_hum_fq == THFQ60) {Flip.Matrix_7Seg(T,H,6,0); Serial.println("60 seconds");}
+      if(temp_hum_fq == THFQ30) {Flip.Matrix_7Seg(T,H,3,0); Serial.println("30 seconds");}
     }
 
     show_current_settings = false;
@@ -733,7 +858,7 @@ void SettingTemp(void)
   EEPROM.write(ee_temp_on_off_address, temp_on_off);
   EEPROM.write(ee_temp_c_f_address, temp_c_f);
   EEPROM.write(ee_temp_fq_address, temp_fq);
-  EEPROM.write(ee_temp_h_on_off_address, temp_h_on_off);
+  EEPROM.write(ee_hum_on_off_address, hum_on_off);
 
   // Required for Arduino Nano ESP32, saves the changes to the EEPROM
   #if defined(ARDUINO_ARCH_ESP32)
@@ -741,7 +866,8 @@ void SettingTemp(void)
   #endif
 */
   modeSettingsStatus = false;
-  timeDisplayStatus = true; 
+  timeDisplayStatus = false;
+  DisplayTime();
 }
 
 /************************************************************************************************/

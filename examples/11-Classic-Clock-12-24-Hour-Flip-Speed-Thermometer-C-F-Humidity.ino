@@ -576,15 +576,13 @@ void SettingTime(void)
   
   // Clear digit[] before setting the time
   for(int i = 0; i < 4; i++) digit[i] = 0;
-  
-  // Display the first digit to set
-  Flip.Matrix_7Seg(digit[0],HLM,HLM,HLM);
 
   Serial.println();
   Serial.println("TIME SETTINGS");
-  Serial.println("0---");
+
 
   settings_level = 1;
+  update_display = true;
 
   do  // Stay in the time settings until all digits are set
   {
@@ -687,16 +685,23 @@ void SettingTime(void)
 
     if(longPressButton2Status == true)
     {
-      settings_level = settings_level + 1;
-      if(settings_level > 4) settings_level = 0;
-
-      if(settings_level == 2) {Flip.Matrix_7Seg(HLM,digit[1],HLM,HLM); Serial.print("-"); Serial.print(digit[1]); Serial.println("--");}
-      if(settings_level == 3) {Flip.Matrix_7Seg(HLM,HLM,digit[2],HLM); Serial.print("--"); Serial.print(digit[2]); Serial.println("-");}
-      if(settings_level == 4) {Flip.Matrix_7Seg(HLM,HLM,HLM,digit[3]); Serial.print("---"); Serial.println(digit[3]);}
+      settings_level++;
+      update_display = true;
     
       ClearPressButtonFlags();
     }
-  } while(settings_level != 0); // Stay in the time settings until all digits are set
+
+    if(update_display == true)
+    {
+      if(settings_level == 1) {Flip.Matrix_7Seg(digit[0],HLM,HLM,HLM); Serial.print(digit[0]); Serial.println("---");}
+      if(settings_level == 2) {Flip.Matrix_7Seg(HLM,digit[1],HLM,HLM); Serial.print("-"); Serial.print(digit[1]); Serial.println("--");}
+      if(settings_level == 3) {Flip.Matrix_7Seg(HLM,HLM,digit[2],HLM); Serial.print("--"); Serial.print(digit[2]); Serial.println("-");}
+      if(settings_level == 4) {Flip.Matrix_7Seg(HLM,HLM,HLM,digit[3]); Serial.print("---"); Serial.println(digit[3]);}
+
+      update_display = false;
+    }
+
+  } while(settings_level < 5); // Stay in the time settings until all digits are set
 
 
 
@@ -778,10 +783,12 @@ uint8_t digit_2_hour = 0;
         break;
         
         case 1:
-          Serial.print("Sleep time: "); Serial.println(set_hour);
+          Serial.print("Sleep time: ");
+          if(time_hr == HR12 && set_hour == 0) set_hour = 1;
           digit_1_hour = (set_hour / 10) % 10;
           if(digit_1_hour == 0) digit_1_hour = CLR;
           digit_2_hour = (set_hour / 1 ) % 10;
+          Serial.println(set_hour);
           Flip.Matrix_7Seg(S,T,digit_1_hour,digit_2_hour);
         break;
 
@@ -793,10 +800,12 @@ uint8_t digit_2_hour = 0;
         break;
 
         case 3:
-          Serial.print("Wake time: "); Serial.println(set_hour);
+          Serial.print("Wake time: ");
+          if(time_hr == HR12 && set_hour == 0) set_hour = 1;
           digit_1_hour = (set_hour / 10) % 10;
           if(digit_1_hour == 0) digit_1_hour = CLR;
           digit_2_hour = (set_hour / 1 ) % 10;
+          Serial.println(set_hour);
           Flip.Matrix_7Seg(W,T,digit_1_hour,digit_2_hour);
         break;
 

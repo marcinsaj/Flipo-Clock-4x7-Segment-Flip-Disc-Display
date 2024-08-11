@@ -330,11 +330,21 @@ void DisplayTime(void)
 
 
 
-
+/* The sequence is started every full minute after the RTC interrupt occurs or every 30 seconds. 
+30 seconds is always counted down from the time of the RTC interrupt, this method was chosen 
+to obtain the best visual effect. After the sequence is called, the millis() start time 
+is recorded at the very beginning. The time is displayed first. Depending on the options 
+that have been set: if temperature display has been enabled, then after 
+the time interval "wait_interval" set by default to 5 seconds, the temperature will be displayed. 
+Then after the time "wait_interval" the humidity will be displayed, if it has been enabled. 
+Of course, if the temperature display has been disabled and the humidity display enabled, 
+only humidity will be displayed - these are independent options. If the temperature 
+and humidity display frequency has been set to 60 seconds, the sequence will end. 
+If it is set to 30 seconds, a new sequence will start 30 seconds after the first sequence was started. 
+After the second cycle, the sequence will end. The next loop will start at the next full minute.*/
 void DisplayTimeAndTemperature(void)
 {  
-  // If the sequence is not already running, initialize it
-  if (sequenceRunning == false) 
+  if (sequenceRunning == false)     // If the sequence is not already running, initialize it 
   {
     sequence_start_time = millis(); // Record the start time
     sequence_level = 0;             // Start from the first state

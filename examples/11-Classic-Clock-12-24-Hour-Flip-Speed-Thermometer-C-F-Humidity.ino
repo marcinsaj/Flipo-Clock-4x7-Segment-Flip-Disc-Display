@@ -99,10 +99,10 @@ unsigned long sequence_start_time = 0;
 unsigned long sequence_current_time = 0;
 
 // Time, temperature and humidity sequence display status flags
-volatile bool sequenceRunning= false;                 // Indicates if the sequence is currently running
-volatile bool sequenceSecondRun = false;           // Flag for second sequence if the temp/hum display interval is set to 30s
-volatile bool firstSequenceComplete = false;           // Flag to indicate the first sequence has completed
-volatile bool secondSequenceComplete = false;          // Flag to indicate the second sequence has completed
+volatile bool sequenceRunning= false;         // Indicates if the sequence is currently running
+volatile bool sequenceSecondRun = false;      // Flag for second sequence if the temp/hum display interval is set to 30s
+volatile bool firstSequenceComplete = false;  // Flag to indicate the first sequence has completed
+volatile bool secondSequenceComplete = false; // Flag to indicate the second sequence has completed
 
 // Variable defining the current level of the time/temperature/humidity display sequence
 uint8_t sequence_level = 0;
@@ -119,29 +119,28 @@ static const uint8_t THFQ30 = 1; // Every 30 seconds - temperature and humidity 
 
 // The values is stored in eeprom memory and read during setup
 volatile uint8_t flip_disc_delay_time = 0; // Flip disc delay/speed effect [ms]
-volatile uint8_t leading_zero = 0;
-volatile uint8_t sleep_hour = 0;
-volatile uint8_t wake_hour = 0;
-
+volatile uint8_t leading_zero = 0;         // Leading zero display ON/OFF
+volatile uint8_t sleep_hour = 0;           // Hour to turn off the clock
+volatile uint8_t wake_hour = 0;            // Hour to turn on the clock
 volatile uint8_t time_hr = 0;              // Time 12/24 hour clock
 volatile uint8_t temp_on_off = 0;          // Temperature ON/OFF
 volatile uint8_t temp_c_f = 0;             // Temparature C/F - Celsius/Fahrenheit
 volatile uint8_t hum_on_off = 0;           // Humidity ON/OFF
-volatile uint8_t temp_hum_fq = 0;              // Temperature and humidity display frequency - 30/60 seconds
+volatile uint8_t temp_hum_fq = 0;          // Temperature and humidity display frequency - 30/60 seconds
 
 // Eeprom addresses where settings are stored
-static const uint16_t ee_delay_address = 0;         // Flip disc delay/speed effect
-static const uint16_t ee_leading_zero_address = 1;
-static const uint16_t ee_sleep_hour_address = 2;
-static const uint16_t ee_wake_hour_address = 3;
-static const uint16_t ee_time_hr_address = 4;       // Time 12/24 hour clock   
-static const uint16_t ee_temp_on_off_address = 5;   // Temperature ON/OFF
-static const uint16_t ee_temp_c_f_address = 6;      // Temparature C/F - Celsius/Fahrenheit
-static const uint16_t ee_hum_on_off_address = 7; // Humidity ON/OFF
-static const uint16_t ee_temp_hum_fq_address = 8;       // Temperature and humidity display frequency - 30/60 seconds
+static const uint16_t ee_delay_address = 0;        // Flip disc delay/speed effect
+static const uint16_t ee_leading_zero_address = 1; // Leading zero display
+static const uint16_t ee_sleep_hour_address = 2;   // Hour to turn off the clock
+static const uint16_t ee_wake_hour_address = 3;    // Hour to turn on the clock
+static const uint16_t ee_time_hr_address = 4;      // Time format 12/24 hour  
+static const uint16_t ee_temp_on_off_address = 5;  // Temperature ON/OFF
+static const uint16_t ee_temp_c_f_address = 6;     // Temparature C/F - Celsius/Fahrenheit
+static const uint16_t ee_hum_on_off_address = 7;   // Humidity ON/OFF
+static const uint16_t ee_temp_hum_fq_address = 8;  // Temperature and humidity display frequency - 30/60 seconds
 
 // Required for EEPROM.begin(eeprom_size) for Arduino Nano ESP32
-static const uint8_t eeprom_size = 6;
+static const uint8_t eeprom_size = 9;
 
 /************************************************************************************************/
 
@@ -179,22 +178,17 @@ void setup()
   // "INT_OFF" - turn OFF interrupt.
   RTC_RX8025T.statusTUI(INT_ON);
   
-  // ssign an interrupt handler to the RTC output, 
+  // Assign an interrupt handler to the RTC output, 
   // an interrupt will be generated every minute to display the time
   attachInterrupt(digitalPinToInterrupt(RTC_PIN), rtcInterruptISR, FALLING);
 
-  // Attention: do not change! Changing these settings may physical damage the flip-disc displays. 
-  // Flip.Init(...); it is the second most important function. Initialization function for a series 
-  // of displays. The function also prepares SPI to control displays. Correct initialization requires 
-  // code names of the serially connected displays:
-  // - D7SEG - 7-segment display
-  // - D3X1 - 3x1 display
+  // Attention: do not change! Changing these settings may physical damage the flip-disc displays.
   Flip.Init(D7SEG, D7SEG, D3X1, D7SEG, D7SEG);
 
   delay(3000); 
   Serial.println("FLIP DISC 7-SEGMENT CLOCK");
 
-  // Function allows you to control one, two or three discs of the selected D3X1 display.
+  // Function allows you to control one, two or three discs of the selected D3X1 display
   // - Flip.Display_3x1(module_number, disc1, disc2, disc3);
   Flip.Display_3x1(1, 0,0,0);
 
@@ -225,10 +219,7 @@ void setup()
   }
 
   // If the read value is correct, set the speed/delay effect according to the read value
-  if(success_reading == true) 
-  {
-    Flip.Delay(flip_disc_delay_time);
-  }
+  if(success_reading == true) Flip.Delay(flip_disc_delay_time);
   else // If the data is incorrect, reset the time for the speed/delay effect
   {
     flip_disc_delay_time = 0;
@@ -236,6 +227,9 @@ void setup()
   }
 
   // Read remaining setting options from memory
+  leading_zero = EEPROM.read(ee_leading_zero_address);
+  sleep_hour = EEPROM.read(ee_sleep_hour_address);
+  wake_hour = EEPROM.read(ee_wake_hour_address);
   time_hr = EEPROM.read(ee_time_hr_address);
   temp_on_off = EEPROM.read(ee_temp_on_off_address);
   temp_c_f = EEPROM.read(ee_temp_c_f_address);
@@ -243,16 +237,20 @@ void setup()
   temp_hum_fq = EEPROM.read(ee_temp_hum_fq_address);
 
   // If the read values ​​are incorrect, set the default values
-  if(time_hr != HR12 && time_hr != HR24) time_hr = HR12;                           // Set the time display to 12 hour format
-  if(temp_on_off != ON && temp_on_off != OFF) temp_on_off = OFF;                   // Turn off the temperature and humidity display, the other options have no effect
-  if(temp_c_f != TPF && temp_c_f != TPC) temp_c_f = TPF;                           // Set temperature display in fahrenheit
-  if(hum_on_off != ON && hum_on_off != OFF) hum_on_off = OFF;             // Turn off humidity display
-  if(temp_hum_fq != THFQ60 && temp_hum_fq != THFQ30) temp_hum_fq = THFQ60;   // Set the temperature and humidity display frequency to 60 seconds  
-  
+  if(leading_zero =! ON && leading_zero =! OFF) leading_zero = ON;         // Turn ON leading zero display  
+  if(sleep_hour < 0 || sleep_hour > 23) sleep_hour = 0;                    // Set sleep hour to 0
+  if(wake_hour < 0 || wake_hour > 23) wake_hour = 0;                       // Set wake hour to 0
+  if(time_hr != HR12 && time_hr != HR24) time_hr = HR12;                   // Set the time display to 12 hour format
+  if(temp_on_off != ON && temp_on_off != OFF) temp_on_off = OFF;           // Turn off the temperature and humidity display, the other options have no effect
+  if(temp_c_f != TPF && temp_c_f != TPC) temp_c_f = TPF;                   // Set temperature display in fahrenheit
+  if(hum_on_off != ON && hum_on_off != OFF) hum_on_off = OFF;              // Turn off humidity display
+  if(temp_hum_fq != THFQ60 && temp_hum_fq != THFQ30) temp_hum_fq = THFQ60; // Set the temperature and humidity display frequency to 60 seconds
+
+
   hum_on_off = ON;
   temp_on_off = ON;
   temp_hum_fq = THFQ60;
-DisplayTime();
+  DisplayTime();
 }
 
 /************************************************************************************************/
@@ -288,8 +286,9 @@ void DisplayTime(void)
   // Extract individual digits for the display
   digit[0] = (hour_time / 10) % 10;
   
+  // Check if the leading zero hiding option is enabled
+  // CLR - clear the leading display
   if(digit[0] == 0 && leading_zero == OFF) digit[0] = CLR;
-
 
   digit[1] = (hour_time / 1) % 10;
   digit[2] = (minute_time / 10) % 10;

@@ -758,7 +758,7 @@ void SettingTime(void)
 
     if(shortPressButton1Status == true || shortPressButton3Status == true)
     {
-      if(settings_level == 1 || settings_level == 3)
+      if(settings_level == 2 || settings_level == 4)
       {
         // Top button "+1", bottom button "-1"
         if(shortPressButton1Status == true) set_hour++;
@@ -815,8 +815,8 @@ void SettingTime(void)
 
         case 1:
           Serial.print("Clock rest period: ");
-          if(set_rest_period = 0){rest_period = OFF; Flip.Matrix_7Seg(R,P,O,F); Serial.println("OFF");}
-          if(set_rest_period = 1){rest_period = ON; Flip.Matrix_7Seg(R,P,O,N); Serial.println("ON");}
+          if(set_rest_period == 0){rest_period = OFF; Flip.Matrix_7Seg(R,P,O,F); Serial.println("OFF");}
+          if(set_rest_period == 1){rest_period = ON; Flip.Matrix_7Seg(R,P,O,N); Serial.println("ON");}
         break;
 
         case 2:
@@ -834,7 +834,7 @@ void SettingTime(void)
         case 3:
           Serial.print("Sleep time: ");
           if(set_am_pm == 0) {sleep_set_am_pm = AM; Flip.Matrix_7Seg(S,T,A,M); Serial.println("AM");}
-          if(set_am_pm == 1) {sleep_set_am_pm = PM;Flip.Matrix_7Seg(S,T,P,M); Serial.println("PM");}
+          if(set_am_pm == 1) {sleep_set_am_pm = PM; Flip.Matrix_7Seg(S,T,P,M); Serial.println("PM");}
         break;
 
         case 4:

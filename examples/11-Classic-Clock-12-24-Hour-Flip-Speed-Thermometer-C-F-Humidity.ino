@@ -116,10 +116,13 @@ static const uint8_t TPF = 0;    // Temperature in Fahrenheit
 static const uint8_t TPC = 1;    // Temperature in Celsius 
 static const uint8_t THFQ60 = 0; // Every 60 seconds - temperature and humidity display frequency
 static const uint8_t THFQ30 = 1; // Every 30 seconds - temperature and humidity display frequency
+static const uint8_t AM = 0;
+static const uint8_t PM = 1;
 
 // The values is stored in eeprom memory and read during setup
 volatile uint8_t flip_disc_delay_time = 0; // Flip disc delay/speed effect [ms]
 volatile uint8_t leading_zero = 0;         // Leading zero display ON/OFF
+volatile uint8_t rest_period = 0;          // Clock rest period ON/OFF
 volatile uint8_t sleep_hour = 0;           // Hour to turn off the clock
 volatile uint8_t wake_hour = 0;            // Hour to turn on the clock
 volatile uint8_t time_hr = 0;              // Time 12/24 hour clock
@@ -131,16 +134,17 @@ volatile uint8_t temp_hum_fq = 0;          // Temperature and humidity display f
 // Eeprom addresses where settings are stored
 static const uint16_t ee_delay_address = 0;        // Flip disc delay/speed effect
 static const uint16_t ee_leading_zero_address = 1; // Leading zero display
-static const uint16_t ee_sleep_hour_address = 2;   // Hour to turn off the clock
-static const uint16_t ee_wake_hour_address = 3;    // Hour to turn on the clock
-static const uint16_t ee_time_hr_address = 4;      // Time format 12/24 hour  
-static const uint16_t ee_temp_on_off_address = 5;  // Temperature ON/OFF
-static const uint16_t ee_temp_c_f_address = 6;     // Temparature C/F - Celsius/Fahrenheit
-static const uint16_t ee_hum_on_off_address = 7;   // Humidity ON/OFF
-static const uint16_t ee_temp_hum_fq_address = 8;  // Temperature and humidity display frequency - 30/60 seconds
+static const uint16_t ee_rest_period_address = 2;  // Clock rest period ON/OFF
+static const uint16_t ee_sleep_hour_address = 3;   // Hour to turn off the clock
+static const uint16_t ee_wake_hour_address = 4;    // Hour to turn on the clock
+static const uint16_t ee_time_hr_address = 5;      // Time format 12/24 hour  
+static const uint16_t ee_temp_on_off_address = 6;  // Temperature ON/OFF
+static const uint16_t ee_temp_c_f_address = 7;     // Temparature C/F - Celsius/Fahrenheit
+static const uint16_t ee_hum_on_off_address = 8;   // Humidity ON/OFF
+static const uint16_t ee_temp_hum_fq_address = 9;  // Temperature and humidity display frequency - 30/60 seconds
 
 // Required for EEPROM.begin(eeprom_size) for Arduino Nano ESP32
-static const uint8_t eeprom_size = 9;
+static const uint8_t eeprom_size = 10;
 
 /************************************************************************************************/
 
@@ -228,6 +232,7 @@ void setup()
 
   // Read remaining setting options from memory
   leading_zero = EEPROM.read(ee_leading_zero_address);
+  rest_period = EEPROM.read(ee_rest_period_address);
   sleep_hour = EEPROM.read(ee_sleep_hour_address);
   wake_hour = EEPROM.read(ee_wake_hour_address);
   time_hr = EEPROM.read(ee_time_hr_address);
@@ -237,7 +242,8 @@ void setup()
   temp_hum_fq = EEPROM.read(ee_temp_hum_fq_address);
 
   // If the read values ​​are incorrect, set the default values
-  if(leading_zero =! ON && leading_zero =! OFF) leading_zero = ON;         // Turn ON leading zero display  
+  if(leading_zero != ON && leading_zero != OFF) leading_zero = ON;         // Turn ON leading zero display
+  if(rest_period != OFF && rest_period != ON) rest_period = OFF;           // Clock rest period ON/OFF
   if(sleep_hour < 0 || sleep_hour > 23) sleep_hour = 0;                    // Set sleep hour to 0
   if(wake_hour < 0 || wake_hour > 23) wake_hour = 0;                       // Set wake hour to 0
   if(time_hr != HR12 && time_hr != HR24) time_hr = HR12;                   // Set the time display to 12 hour format
@@ -250,6 +256,10 @@ void setup()
   hum_on_off = ON;
   temp_on_off = ON;
   temp_hum_fq = THFQ60;
+
+
+
+  
   DisplayTime();
 }
 
@@ -726,14 +736,21 @@ void SettingTime(void)
 
   Flip.Display_3x1(1, 1,1,0); // Set the dots
 
-settings_level = 0;
-update_display = true;
+  settings_level = 0;
+  update_display = true;
 
-int set_hour = 0;
-bool set_am_pm = 0;
+  bool time_set_am_pm = 0;
+  bool sleep_set_am_pm = 0;
+  bool wake_set_am_pm = 0;
+  bool set_am_pm = 0;
 
-uint8_t digit_1_hour = 0;
-uint8_t digit_2_hour = 0;
+  bool set_rest_period = OFF;
+  uint8_t sleep_set_hour = 0;
+  uint8_t wake_set_hour = 0;
+
+  int set_hour = 0;
+  uint8_t digit_1_hour = 0;
+  uint8_t digit_2_hour = 0;
 
   do
   {
@@ -760,7 +777,8 @@ uint8_t digit_2_hour = 0;
         } 
       }
 
-      if(settings_level == 0 || settings_level == 2 || settings_level == 4) set_am_pm = !set_am_pm;
+      if(settings_level == 0 || settings_level == 3 || settings_level == 5) set_am_pm = !set_am_pm;
+      if(settings_level == 1) set_rest_period = !set_rest_period;
 
       update_display = true;
     }  
@@ -773,13 +791,17 @@ uint8_t digit_2_hour = 0;
       
       update_display = true;
     }
-
+    
+    // If the time is set to 24 hours, there is no need to set the time format AM/PM
     if(time_hr == HR24) 
     {
       if(settings_level == 0) settings_level = 1;
-      if(settings_level == 2) settings_level = 3;
-      if(settings_level == 4) settings_level = 5;
-    } 
+      if(settings_level == 3) settings_level = 4;
+      if(settings_level == 5) settings_level = 6;
+    }
+
+    // If the clock rest period has been disabled, skip the rest of the options and exit the settings
+    if(rest_period == OFF && settings_level == 2) settings_level = 6; 
 
     if(update_display == true)
     {      
@@ -787,41 +809,50 @@ uint8_t digit_2_hour = 0;
       {
         case 0:
           Serial.print("Time format: ");
-          if(set_am_pm == 0) {Flip.Matrix_7Seg(T,CLR,A,M); Serial.println("AM");}
-          if(set_am_pm == 1) {Flip.Matrix_7Seg(T,CLR,P,M); Serial.println("PM");}
+          if(set_am_pm == 0) {time_set_am_pm = AM; Flip.Matrix_7Seg(T,CLR,A,M); Serial.println("AM");}
+          if(set_am_pm == 1) {time_set_am_pm = PM; Flip.Matrix_7Seg(T,CLR,P,M); Serial.println("PM");}
         break;
-        
+
         case 1:
+          Serial.print("Clock rest period: ");
+          if(set_rest_period = 0){rest_period = OFF; Flip.Matrix_7Seg(R,P,O,F); Serial.println("OFF");}
+          if(set_rest_period = 1){rest_period = ON; Flip.Matrix_7Seg(R,P,O,N); Serial.println("ON");}
+        break;
+
+        case 2:
           Serial.print("Sleep time: ");
           if(time_hr == HR12 && set_hour == 0) set_hour = 1;
+          sleep_set_hour = set_hour;
           digit_1_hour = (set_hour / 10) % 10;
+          
           if(digit_1_hour == 0) digit_1_hour = CLR;
           digit_2_hour = (set_hour / 1 ) % 10;
           Serial.println(set_hour);
           Flip.Matrix_7Seg(S,T,digit_1_hour,digit_2_hour);
         break;
 
-        case 2:
+        case 3:
           Serial.print("Sleep time: ");
-          if(set_am_pm == 0) {Flip.Matrix_7Seg(S,T,A,M); Serial.println("AM");}
-          if(set_am_pm == 1) {Flip.Matrix_7Seg(S,T,P,M); Serial.println("PM");}
-          set_hour = 0;
+          if(set_am_pm == 0) {sleep_set_am_pm = AM; Flip.Matrix_7Seg(S,T,A,M); Serial.println("AM");}
+          if(set_am_pm == 1) {sleep_set_am_pm = PM;Flip.Matrix_7Seg(S,T,P,M); Serial.println("PM");}
         break;
 
-        case 3:
+        case 4:
           Serial.print("Wake time: ");
           if(time_hr == HR12 && set_hour == 0) set_hour = 1;
+          wake_set_hour = set_hour;
           digit_1_hour = (set_hour / 10) % 10;
+          
           if(digit_1_hour == 0) digit_1_hour = CLR;
           digit_2_hour = (set_hour / 1 ) % 10;
           Serial.println(set_hour);
           Flip.Matrix_7Seg(W,T,digit_1_hour,digit_2_hour);
         break;
 
-        case 4:
+        case 5:
           Serial.print("Wake time: ");
-          if(set_am_pm == 0) {Flip.Matrix_7Seg(W,T,A,M); Serial.println("AM");}
-          if(set_am_pm == 1) {Flip.Matrix_7Seg(W,T,P,M); Serial.println("PM");}
+          if(set_am_pm == 0) {wake_set_am_pm = AM; Flip.Matrix_7Seg(W,T,A,M); Serial.println("AM");}
+          if(set_am_pm == 1) {wake_set_am_pm = PM; Flip.Matrix_7Seg(W,T,P,M); Serial.println("PM");}
         break;
       }
 
@@ -830,16 +861,8 @@ uint8_t digit_2_hour = 0;
 
     ClearPressButtonFlags();
 
-  } while(settings_level < 5);
+  } while(settings_level < 6);
 
-
-  EEPROM.write(ee_sleep_hour_address, sleep_hour); // Save the selected 12/24 time format to memory
-  EEPROM.write(ee_wake_hour_address, wake_hour);
-
-  // Required for Arduino Nano ESP32, saves the changes to the EEPROM
-  #if defined(ARDUINO_ARCH_ESP32)
-    EEPROM.commit(); 
-  #endif
 
 
 
@@ -869,6 +892,34 @@ uint8_t digit_2_hour = 0;
   // Convert entered individual digits to the format supported by RTC
   uint8_t hour_time = (digit[0] * 10) + digit[1];
   uint8_t minute_time = (digit[2] * 10) + digit[3];
+
+  if(time_hr == HR12)
+  {
+    if(time_set_am_pm == PM && hour_time != 12) hour_time = hour_time + 12;
+    if(time_set_am_pm == AM && hour_time == 12) hour_time = 0;
+
+    if(sleep_set_am_pm == PM && sleep_set_hour != 12) sleep_hour = sleep_set_hour + 12;
+    if(sleep_set_am_pm == AM && sleep_set_hour == 12) sleep_hour = 0;
+
+    if(wake_set_am_pm == PM && wake_set_hour != 12) wake_hour = wake_set_hour + 12;
+    if(wake_set_am_pm == AM && wake_set_hour == 12) wake_hour = 0;
+  }
+
+
+/*
+
+  EEPROM.write(ee_sleep_hour_address, sleep_hour); // Save the selected 12/24 time format to memory
+  EEPROM.write(ee_wake_hour_address, wake_hour);
+
+  // Required for Arduino Nano ESP32, saves the changes to the EEPROM
+  #if defined(ARDUINO_ARCH_ESP32)
+    EEPROM.commit(); 
+  #endif
+
+*/
+
+
+
 
   // setTime(hh, mm, ss, day, month, year) 
   // The date is skipped and the seconds are set by default to 0

@@ -602,6 +602,13 @@ void SettingTime(void)
 
 
 
+
+
+
+
+
+
+
   Serial.println();
   Serial.println("TIME SETTINGS");
   
@@ -742,6 +749,17 @@ void SettingTime(void)
 
     if(updateDigit == true)
     { 
+      // It may happen that the previous set time was e.g. 04:00. We start setting the time from the first digit on the left, 
+      // so if we set the first digit to e.g. 1, then after entering the second digit of the hour, the number 4 could appear. 
+      // It may also happen e.g. the old set time is 10:00. If we start the new time by setting the first digit to 0, 
+      // then the second digit could also be displayed 0. 
+      // Therefore, these conditions ensure that such an inaccuracy does not occur
+      if(time_settings_level == 1 && time_hr == HR12)
+      {
+        if(digit[time_settings_level - 1] == 1 && digit[time_settings_level] > 2) digit[time_settings_level] = 0;
+        if(digit[time_settings_level - 1] == 0 && digit[time_settings_level] == 0) digit[time_settings_level] = 1;
+      }
+      
       current_digit = digit[time_settings_level];
       updateDigit = false;
     }
@@ -757,32 +775,21 @@ void SettingTime(void)
     }      
 
   } while(timeSettingsStatus == true); // Stay in the speed settings until all digits are set
-
-
-
-
-
-
-
-
-
-
-
-
+  
+  // The hour and minute settings are complete
+  // Next settings are AM/PM time format for 12 hour time. 
+  // The last option to set will be the rest period 
+  // of the clock - the hour to turn off the clock and the hour to turn on the clock
+  // sleep time & wake time
 
   Flip.Display_3x1(1, 1,1,0); // Set the dots
 
   updateDisplay = true;
   bool updateData = true;
 
-
   bool time_am_pm = 0;
   bool sleep_am_pm = 0;
   bool wake_am_pm = 0;
-
-  bool rest_period = OFF;
-  uint8_t sleep_set_hour = 0;
-  uint8_t wake_set_hour = 0;
 
   int set_hour = 0;
   uint8_t digit_1 = 0;
@@ -846,6 +853,10 @@ void SettingTime(void)
       if(time_settings_level == 5) time_settings_level = 6;
     }
 
+    // RTC does not support 12 hour time, a simple trick was used to determine AM/PM time in 12 hour system. 
+    // Time stored in RTC is always in 24 hour format, so with a simple conversion we can determine 
+    // and prepare the time to display in 12 hour AM/PM format. 
+    // If we have hours from 0 to 11, it is AM time, if from 12 to 23, it is PM.
     if(updateData == true)
     {
       if(time_hr == HR12)
@@ -884,16 +895,6 @@ void SettingTime(void)
       updateData = false;
     }
 
-
-
-
-
-
-
-
-
-
-
     // If the clock rest period has been disabled, skip the rest of the options and exit the settings
     if(rest_period == OFF && time_settings_level == 2) 
     {
@@ -919,6 +920,8 @@ void SettingTime(void)
 
       if(time_settings_level == 2)
       {
+        // To display hour correctly on two displays, we need to split the entered data into tens and ones. 
+        // If the first digit is 0, it will not be displayed.
         Serial.print("Sleep time: ");
         sleep_hour = set_hour;
         digit_1 = (set_hour / 10) % 10;
@@ -938,6 +941,8 @@ void SettingTime(void)
 
       if(time_settings_level == 4)
       {
+        // To display hour correctly on two displays, we need to split the entered data into tens and ones. 
+        // If the first digit is 0, it will not be displayed.
         Serial.print("Wake time: ");
         wake_hour = set_hour;
         digit_1 = (set_hour / 10) % 10;
@@ -962,9 +967,6 @@ void SettingTime(void)
 
   } while(timeSettingsStatus == true); // Stay in the speed settings until all digits are set
 
-
-
-
   Serial.println("Settings have been saved");
   Serial.println("------------------------");
   
@@ -972,33 +974,31 @@ void SettingTime(void)
   hour_time = (digit[0] * 10) + digit[1];
   minute_time = (digit[2] * 10) + digit[3];
 
+
+  // RTC does not support 12 hour time, a simple trick was used to determine AM/PM time in 12 hour system. 
+  // Time stored in RTC is always in 24 hour format, so with a simple conversion we can determine 
+  // and prepare the time to display in 12 hour AM/PM format. 
+  // If we have hours from 0 to 11, it is AM time, if from 12 to 23, it is PM.
   if(time_hr == HR12)
   {
     if(time_am_pm == PM && hour_time != 12) hour_time = hour_time + 12;
     if(time_am_pm == AM && hour_time == 12) hour_time = 0;
 
-    if(sleep_am_pm == PM && sleep_set_hour != 12) sleep_hour = sleep_set_hour + 12;
-    if(sleep_am_pm == AM && sleep_set_hour == 12) sleep_hour = 0;
+    if(sleep_am_pm == PM && sleep_hour != 12) sleep_hour = sleep_hour + 12;
+    if(sleep_am_pm == AM && sleep_hour == 12) sleep_hour = 0;
 
-    if(wake_am_pm == PM && wake_set_hour != 12) wake_hour = wake_set_hour + 12;
-    if(wake_am_pm == AM && wake_set_hour == 12) wake_hour = 0;
+    if(wake_am_pm == PM && wake_hour != 12) wake_hour = wake_hour + 12;
+    if(wake_am_pm == AM && wake_hour == 12) wake_hour = 0;
   }
 
-
-/*
-
-  EEPROM.write(ee_sleep_hour_address, sleep_hour); // Save the selected 12/24 time format to memory
+  EEPROM.write(ee_rest_period_address, rest_period);
+  EEPROM.write(ee_sleep_hour_address, sleep_hour);
   EEPROM.write(ee_wake_hour_address, wake_hour);
 
   // Required for Arduino Nano ESP32, saves the changes to the EEPROM
   #if defined(ARDUINO_ARCH_ESP32)
     EEPROM.commit(); 
   #endif
-
-*/
-
-
-
 
   // setTime(hh, mm, ss, day, month, year) 
   // The date is skipped and the seconds are set by default to 0
@@ -1008,51 +1008,12 @@ void SettingTime(void)
   // Set the RTC from the system time
   RTC_RX8025T.set(now());
   
-  timeSettingsStatus = false;
   modeSettingsStatus = false;
   timeDisplayStatus = false;
-  DisplayTime();
+  
+  if(clockStatus == ON) DisplayTime();
+  if(clockStatus == OFF) DisplayRestPeriod();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /************************************************************************************************/
 void SettingSpeed(void)
@@ -1063,7 +1024,7 @@ void SettingSpeed(void)
   // we need to reset the sequence flag
   sequenceRunning = false;
 
-  // Settings are active
+  // Activate the settings mode
   modeSettingsStatus = true;
 
   Serial.println();
@@ -1074,7 +1035,7 @@ void SettingSpeed(void)
   Flip.Matrix_7Seg(S,P,E,D);
   delay(1500);
   Flip.Display_3x1(1, 1,1,0);                     // Set dots
-  Flip.Display_7Seg(1,S);                         // Display "S"
+  Flip.Display_7Seg(1,S); Flip.Display_7Seg(2,P); // Display "SP"
 
   int speed_index = 0;
   bool updateDisplay = true;
@@ -1200,12 +1161,17 @@ void SettingTemp(void)
       if(temp_on_off == ON) {Flip.Matrix_7Seg(T,CLR,O,N); Serial.println("ON");}
     }
 
+    // If the temperature display has been disabled then 
+    // skip the Celsius/Fahrenheit display format selection and go to the humidity display option
     if(temp_settings_level == 1)
     {
-      Serial.print("Temperature: ");
-      if(temp_c_f == TPF) {Flip.Matrix_7Seg(D,CLR,DEG,F); Serial.println("°F");}
-      if(temp_c_f == TPC) {Flip.Matrix_7Seg(D,CLR,DEG,C); Serial.println("°C");}
-    }
+      if(temp_on_off == ON) 
+      {
+        Serial.print("Temperature: ");
+        if(temp_c_f == TPF) {Flip.Matrix_7Seg(D,CLR,DEG,F); Serial.println("°F");}
+        if(temp_c_f == TPC) {Flip.Matrix_7Seg(D,CLR,DEG,C); Serial.println("°C");}
+      } else temp_settings_level = 2;
+    } 
 
     if(temp_settings_level == 2)
     {
@@ -1214,12 +1180,17 @@ void SettingTemp(void)
       if(hum_on_off == ON) {Flip.Matrix_7Seg(H,CLR,O,N); Serial.println("ON");}
     }
 
+    // If the temperature and humidity display has been disabled 
+    // then skip the display frequency option and complete the settings
     if(temp_settings_level == 3)
     {
-      Serial.print("Temperature and/or Humidity display frequency: "); 
-      if(temp_hum_fq == THFQ60) {Flip.Matrix_7Seg(F,CLR,6,0); Serial.println("60 seconds");}
-      if(temp_hum_fq == THFQ30) {Flip.Matrix_7Seg(F,CLR,3,0); Serial.println("30 seconds");}
-    }
+      if(temp_on_off == ON || hum_on_off == ON)
+      {
+        Serial.print("Temperature and/or Humidity display frequency: "); 
+        if(temp_hum_fq == THFQ60) {Flip.Matrix_7Seg(F,CLR,6,0); Serial.println("60 seconds");}
+        if(temp_hum_fq == THFQ30) {Flip.Matrix_7Seg(F,CLR,3,0); Serial.println("30 seconds");}
+      } else tempSettingsStatus = false;
+    } 
 
     updateDisplay = false;
   }  

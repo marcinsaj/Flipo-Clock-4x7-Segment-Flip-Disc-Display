@@ -527,26 +527,20 @@ void SettingTime(void)
   // If the settings were enabled during the time/temperature/humidity sequence, 
   // we need to reset the sequence flag
   sequenceRunning = false;
+
+  // Settings are active
+  modeSettingsStatus = true;
   
   Serial.println();
   Serial.println("TIME FORMAT SETTINGS");
 
-  // The speed/delay effect is used only when displaying the time 
-  // During time settings, the default value is 0
   Flip.Delay(0);
-
+  Flip.Display_3x1(1, 0,0,0); // Clear dots
   Flip.Matrix_7Seg(H,O,U,R);
-  Flip.Display_3x1(1, 0,0,0); // Clear the dots
-  delay(1500);   
-  Flip.Display_3x1(1, 1,1,0); // Set the dots
+  delay(1500);
+  Flip.Display_3x1(1, 1,1,0); // Set dots
 
-  modeSettingsStatus = true;
-  time_hr = HR12;    // After entering the setting, the time format is set to 12 hours by default
-  leading_zero = ON; // Leading zero enable by default
-
-  uint8_t settings_level = 0;
-  bool set_time_hr = time_hr;
-  bool set_leading_zero = leading_zero;
+  uint8_t time_settings_level = 0;
   bool updateDisplay = true;
 
   do
@@ -555,40 +549,42 @@ void SettingTime(void)
 
     if(shortPressButton1Status == true || shortPressButton3Status == true)
     {
-      if(settings_level == 0) set_time_hr = !set_time_hr;
-      if(settings_level == 1) set_leading_zero = !set_leading_zero;
+      if(time_settings_level == 0) time_hr = !time_hr;
+      if(time_settings_level == 1) leading_zero = !leading_zero;
+
+      ClearPressButtonFlags();
       updateDisplay = true;    
     }
     
-    if(longPressButton2Status == true) 
+    if(longPressButton2Status == true)
     {
-      settings_level++;
-      updateDisplay = true;
-    } 
+      time_settings_level++;
+      if(time_settings_level <= 1) updateDisplay = true;       // Stay in settings
+      if(time_settings_level  > 1) timeSettingsStatus = false;  // Exit first part od time settings
+      ClearPressButtonFlags();
+    }
 
     if(updateDisplay == true)
     {
       updateDisplay = false;
 
-      switch(settings_level) 
+      if(time_settings_level == 0)
       {
-        case 0: // Time format 12/24 hour
-          Serial.print("Time format: ");
-          if(set_time_hr == 0) {time_hr = HR12; Flip.Matrix_7Seg(H,R,1,2); Serial.println("12-hour");}
-          if(set_time_hr == 1) {time_hr = HR24; Flip.Matrix_7Seg(H,R,2,4); Serial.println("24-hour");}
-        break;
+        Serial.print("Time format: ");
+        if(time_hr == HR12) {Flip.Matrix_7Seg(H,R,1,2); Serial.println("12-hour");}
+        if(time_hr == HR24) {Flip.Matrix_7Seg(H,R,2,4); Serial.println("24-hour");}
+      }
 
-        case 1: // Leading zero
-          Serial.print("Leading zero: ");
-          if(set_leading_zero == 1) {leading_zero = ON; Flip.Matrix_7Seg(L,Z,O,N); Serial.println("ON");}
-          if(set_leading_zero == 0) {leading_zero = OFF; Flip.Matrix_7Seg(L,Z,O,F); Serial.println("OFF");}
-        break;
-      } 
+      if(time_settings_level == 1)
+      {
+        Serial.print("Leading zero: ");
+        if(leading_zero == ON)  {Flip.Matrix_7Seg(L,Z,O,N); Serial.println("ON"); }
+        if(leading_zero == OFF) {Flip.Matrix_7Seg(L,Z,O,F); Serial.println("OFF");}
+      }
+
+      updateDisplay = false;
     } 
-
-    ClearPressButtonFlags();
-
-  } while(settings_level < 2);
+  } while(timeSettingsStatus == true);
 
   EEPROM.write(ee_time_hr_address, time_hr); // Save the selected 12/24 time format to memory
   EEPROM.write(ee_leading_zero_address, leading_zero);
@@ -597,25 +593,44 @@ void SettingTime(void)
   #if defined(ARDUINO_ARCH_ESP32)
     EEPROM.commit(); 
   #endif
-
-
-
-
-
   
-  Flip.Display_3x1(1, 0,0,0); // Clear the dots
-  Flip.Matrix_7Seg(T,I,M,E);
-  delay(1500);
-  
-  // Clear digit[] before setting the time
-  for(int i = 0; i < 4; i++) digit[i] = 0;
+
+
+
+
+
+
+
 
   Serial.println();
   Serial.println("TIME SETTINGS");
-
-
-  settings_level = 1;
+  
+  Flip.Delay(0);
+  Flip.Display_3x1(1, 0,0,0); // Clear dots
+  Flip.Matrix_7Seg(T,I,M,E);
+  delay(1500);
+  
+  time_settings_level = 0;
   updateDisplay = true;
+  timeSettingsStatus = true;
+  int current_digit = 0;
+  bool updateDigit = true;
+
+  uint8_t hour_time = tm.Hour;
+  uint8_t minute_time = tm.Minute;
+  
+  // 12-Hour conversion
+  if(time_hr == HR12)
+  {
+    if(hour_time > 12) hour_time = hour_time - 12;
+    if(hour_time == 0) hour_time = 12; 
+  }
+
+  // Extract individual digits for the display
+  digit[0] = (hour_time / 10) % 10;
+  digit[1] = (hour_time / 1) % 10;
+  digit[2] = (minute_time / 10) % 10;
+  digit[3] = (minute_time / 1) % 10;
 
   do  // Stay in the time settings until all digits are set
   {
@@ -623,118 +638,125 @@ void SettingTime(void)
     
     if(shortPressButton1Status == true || shortPressButton3Status == true)
     {
-      uint8_t digit_number = settings_level - 1;
-
-      // Top button "+1", bottom button "-1"
-      if(shortPressButton1Status == true) {digit[digit_number] = digit[digit_number] + 1;}
-      if(shortPressButton3Status == true) {digit[digit_number] = digit[digit_number] - 1;}
-
+      if(shortPressButton1Status == true) current_digit++; // Top button "+1"
+      if(shortPressButton3Status == true) current_digit--; // Bottom button "-1"
+      
       if(time_hr == HR12)
       {
-        // First digit: 0-1
-        if(settings_level == 1)
+        if(time_settings_level == 0) // First digit: 0-1
         {
-          if(digit[digit_number] < 0) digit[digit_number] = 1;
-          if(digit[digit_number] > 1) digit[digit_number] = 0;
-          Serial.print(digit[0]); Serial.println("---");
+          if(current_digit < 0) current_digit = 1;
+          if(current_digit > 1) current_digit = 0;
+          Serial.print(current_digit); Serial.println("---");
         }
 
-        // Second digit: 0-9 or 0-2
-        if(settings_level == 2)
+        if(time_settings_level == 1) // Second digit: 1-9 or 0-2
         {
-          // If the first digit is 0 then the second digit can be from 0 to 9
-          if(digit[digit_number-1] == 0)
+          // If the first digit is 0 then the second digit can be from 1 to 9
+          if(digit[0] == 0)
           {
-           if(digit[digit_number] < 0) digit[digit_number] = 9;
-           if(digit[digit_number] > 9) digit[digit_number] = 0;
+           if(current_digit < 1) current_digit = 9;
+           if(current_digit > 9)  current_digit = 1;
           }
 
           // If the first digit is 1 then the second digit 
           // cannot be greater than 2 because the largest possible hour is 12
-          if(digit[digit_number-1] == 1)
+          if(digit[0] == 1)
           {
-            if(digit[digit_number] > 2) digit[digit_number] = 0;
-            if(digit[digit_number] < 0) digit[digit_number] = 2;
+            if(current_digit > 2) current_digit = 0;
+            if(current_digit < 0) current_digit = 2;
           }
 
-          Serial.print("-"); Serial.print(digit[1]); Serial.println("--");
+          Serial.print("-"); Serial.print(current_digit); Serial.println("--");
         }
       }
-
+      
       if(time_hr == HR24)
       {
         // First digit: 0-2
-        if(settings_level == 1)
+        if(time_settings_level == 0)
         {
-          if(digit[digit_number] < 0) digit[digit_number] = 2;
-          if(digit[digit_number] > 2) digit[digit_number] = 0;
-          Serial.print(digit[0]); Serial.println("---");
+          if(current_digit < 0) current_digit = 2;
+          if(current_digit > 2) current_digit = 0;
+          Serial.print(current_digit); Serial.println("---");
         }
 
         // Second digit: 0-9 or 0-3
-        if(settings_level == 2)
+        if(time_settings_level == 1)
         {
           // If the first digit is 0 or 1 then the second digit can be from 0 to 9
-          if(digit[digit_number-1] != 2)
+          if(digit[0] != 2)
           {
-            if(digit[digit_number] < 0) digit[digit_number] = 9;
-            if(digit[digit_number] > 9) digit[digit_number] = 0;
+            if(current_digit < 0) current_digit = 9;
+            if(current_digit > 9) current_digit = 0;
           }
 
           // If the first digit is 2 then the second digit 
           // cannot be greater than 3 because the largest possible hour is 23
-          if(digit[digit_number-1] == 2)
+          if(digit[0] == 2)
           {
-            if(digit[digit_number] > 3) digit[digit_number] = 0;
-            if(digit[digit_number] < 0) digit[digit_number] = 3;
+            if(current_digit > 3) current_digit = 0;
+            if(current_digit < 0) current_digit = 3;
           }
 
-          Serial.print("-"); Serial.print(digit[1]); Serial.println("--");
+          Serial.print("-"); Serial.print(current_digit); Serial.println("--");
         }
       }  
 
       // Third digit: 0-5
-      if(settings_level == 3)
+      if(time_settings_level == 2)
       {
-        if(digit[digit_number] < 0) digit[digit_number] = 5;
-        if(digit[digit_number] > 5) digit[digit_number] = 0;
-        Serial.print("--"); Serial.print(digit[2]); Serial.println("-");
+        if(current_digit < 0) current_digit = 5;
+        if(current_digit > 5) current_digit = 0;
+        Serial.print("--"); Serial.print(current_digit); Serial.println("-");
       }
 
       // Fourth digit: 0-9
-      if(settings_level == 4)
+      if(time_settings_level == 3)
       {
-        if(digit[digit_number] < 0) digit[digit_number] = 9;
-        if(digit[digit_number] > 9) digit[digit_number] = 0;
-        Serial.print("---"); Serial.println(digit[3]);
+        if(current_digit < 0) current_digit = 9;
+        if(current_digit > 9) current_digit = 0;
+        Serial.print("---"); Serial.println(current_digit);
       }          
 
       // Update the display for only the currently set digit,
       // for more details see FlipDisc.h library
-      Flip.Display_7Seg(settings_level, digit[digit_number]);  
+      Flip.Display_7Seg(time_settings_level + 1, current_digit);     
+      digit[time_settings_level] = current_digit;
 
       ClearPressButtonFlags();
     }
 
     if(longPressButton2Status == true)
-    {
-      settings_level++;
-      updateDisplay = true;
-    
+    {      
+      time_settings_level++;      
+      if(time_settings_level >  3) timeSettingsStatus = false;  // Exit settings
+      if(time_settings_level <= 3) 
+      {
+        updateDigit = true;
+        updateDisplay = true;
+      }
+
       ClearPressButtonFlags();
     }
 
+    if(updateDigit == true)
+    { 
+      current_digit = digit[time_settings_level];
+      updateDigit = false;
+    }
+    
     if(updateDisplay == true)
     {
-      if(settings_level == 1) {Flip.Matrix_7Seg(digit[0],HLM,HLM,HLM); Serial.print(digit[0]); Serial.println("---");}
-      if(settings_level == 2) {Flip.Matrix_7Seg(HLM,digit[1],HLM,HLM); Serial.print("-"); Serial.print(digit[1]); Serial.println("--");}
-      if(settings_level == 3) {Flip.Matrix_7Seg(HLM,HLM,digit[2],HLM); Serial.print("--"); Serial.print(digit[2]); Serial.println("-");}
-      if(settings_level == 4) {Flip.Matrix_7Seg(HLM,HLM,HLM,digit[3]); Serial.print("---"); Serial.println(digit[3]);}
+      if(time_settings_level == 0) {Flip.Matrix_7Seg(digit[0],HLM,HLM,HLM); Serial.print(digit[0]); Serial.println("---");}
+      if(time_settings_level == 1) {Flip.Matrix_7Seg(HLM,digit[1],HLM,HLM); Serial.print("-"); Serial.print(digit[1]); Serial.println("--");}
+      if(time_settings_level == 2) {Flip.Matrix_7Seg(HLM,HLM,digit[2],HLM); Serial.print("--"); Serial.print(digit[2]); Serial.println("-");}
+      if(time_settings_level == 3) {Flip.Matrix_7Seg(HLM,HLM,HLM,digit[3]); Serial.print("---"); Serial.println(digit[3]);}
 
       updateDisplay = false;
-    }
+    }      
 
-  } while(settings_level < 5); // Stay in the time settings until all digits are set
+  } while(timeSettingsStatus == true); // Stay in the speed settings until all digits are set
 
 
 
@@ -750,21 +772,25 @@ void SettingTime(void)
 
   Flip.Display_3x1(1, 1,1,0); // Set the dots
 
-  settings_level = 0;
   updateDisplay = true;
+  bool updateData = true;
 
-  bool time_set_am_pm = 0;
-  bool sleep_set_am_pm = 0;
-  bool wake_set_am_pm = 0;
-  bool set_am_pm = 0;
 
-  bool set_rest_period = OFF;
+  bool time_am_pm = 0;
+  bool sleep_am_pm = 0;
+  bool wake_am_pm = 0;
+
+  bool rest_period = OFF;
   uint8_t sleep_set_hour = 0;
   uint8_t wake_set_hour = 0;
 
   int set_hour = 0;
-  uint8_t digit_1_hour = 0;
-  uint8_t digit_2_hour = 0;
+  uint8_t digit_1 = 0;
+  uint8_t digit_2 = 0;
+
+  timeSettingsStatus = true;
+  time_settings_level = 0;
+
 
   do
   {
@@ -772,7 +798,7 @@ void SettingTime(void)
 
     if(shortPressButton1Status == true || shortPressButton3Status == true)
     {
-      if(settings_level == 2 || settings_level == 4)
+      if(time_settings_level == 2 || time_settings_level == 4)
       {
         // Top button "+1", bottom button "-1"
         if(shortPressButton1Status == true) set_hour++;
@@ -791,83 +817,142 @@ void SettingTime(void)
         } 
       }
 
-      if(settings_level == 0 || settings_level == 3 || settings_level == 5) set_am_pm = !set_am_pm;
-      if(settings_level == 1) set_rest_period = !set_rest_period;
+      if(time_settings_level == 0) time_am_pm = !time_am_pm;
+      if(time_settings_level == 1) rest_period = !rest_period;
+      if(time_settings_level == 3) sleep_am_pm = !sleep_am_pm;
+      if(time_settings_level == 5) wake_am_pm = !wake_am_pm;
 
       updateDisplay = true;
     }  
     
-    if(longPressButton2Status == true) 
-    {
-      settings_level++;
-      set_hour = 0;
-      set_am_pm = 0;
-      
-      updateDisplay = true;
+    if(longPressButton2Status == true)
+    {      
+      time_settings_level++;      
+      if(time_settings_level >  5) timeSettingsStatus = false;  // Exit settings
+      if(time_settings_level <= 5) 
+      {
+        updateData = true;
+        updateDisplay = true;
+      }
+
+      ClearPressButtonFlags();
     }
     
     // If the time is set to 24 hours, there is no need to set the time format AM/PM
     if(time_hr == HR24) 
     {
-      if(settings_level == 0) settings_level = 1;
-      if(settings_level == 3) settings_level = 4;
-      if(settings_level == 5) settings_level = 6;
+      if(time_settings_level == 0) time_settings_level = 1;
+      if(time_settings_level == 3) time_settings_level = 4;
+      if(time_settings_level == 5) time_settings_level = 6;
     }
 
+    if(updateData == true)
+    {
+      if(time_hr == HR12)
+      {
+        if(time_settings_level == 2)
+        {
+          if(sleep_hour >= 12) 
+          {
+            sleep_am_pm = PM;
+            set_hour = sleep_hour - 12;
+          }
+          if(sleep_hour <  12) 
+          {
+            sleep_am_pm = AM;
+            set_hour = sleep_hour; 
+          }
+        }
+        
+        if(time_settings_level == 4)
+        {
+          if(wake_hour >= 12) 
+          {
+            wake_am_pm = PM;
+            set_hour = wake_hour - 12;
+          }
+          if(wake_hour <  12) 
+          {
+            wake_am_pm = AM;
+            set_hour = wake_hour; 
+          }
+        }
+
+        if(set_hour == 0) set_hour = 1;
+      }
+
+      updateData = false;
+    }
+
+
+
+
+
+
+
+
+
+
+
     // If the clock rest period has been disabled, skip the rest of the options and exit the settings
-    if(rest_period == OFF && settings_level == 2) settings_level = 6; 
+    if(rest_period == OFF && time_settings_level == 2) 
+    {
+      timeSettingsStatus = false; 
+      time_settings_level = 6;
+    }
 
     if(updateDisplay == true)
     {      
-      switch(settings_level) 
+      if(time_settings_level == 0)
       {
-        case 0:
-          Serial.print("Time format: ");
-          if(set_am_pm == 0) {time_set_am_pm = AM; Flip.Matrix_7Seg(T,CLR,A,M); Serial.println("AM");}
-          if(set_am_pm == 1) {time_set_am_pm = PM; Flip.Matrix_7Seg(T,CLR,P,M); Serial.println("PM");}
-        break;
+        Serial.print("Time format: ");
+        if(time_am_pm == AM) {Flip.Matrix_7Seg(T,F,A,M); Serial.println("AM");}
+        if(time_am_pm == PM) {Flip.Matrix_7Seg(T,F,P,M); Serial.println("PM");}
+      }
 
-        case 1:
-          Serial.print("Clock rest period: ");
-          if(set_rest_period == 0){rest_period = OFF; Flip.Matrix_7Seg(R,P,O,F); Serial.println("OFF");}
-          if(set_rest_period == 1){rest_period = ON; Flip.Matrix_7Seg(R,P,O,N); Serial.println("ON");}
-        break;
+      if(time_settings_level == 1)
+      {
+        Serial.print("Clock rest period: ");
+        if(rest_period == OFF) {Flip.Matrix_7Seg(R,P,O,F); Serial.println("OFF");}
+        if(rest_period == ON)  {Flip.Matrix_7Seg(R,P,O,N); Serial.println("ON");}
+      }
 
-        case 2:
-          Serial.print("Sleep time: ");
-          if(time_hr == HR12 && set_hour == 0) set_hour = 1;
-          sleep_set_hour = set_hour;
-          digit_1_hour = (set_hour / 10) % 10;
+      if(time_settings_level == 2)
+      {
+        Serial.print("Sleep time: ");
+        sleep_hour = set_hour;
+        digit_1 = (set_hour / 10) % 10;
           
-          if(digit_1_hour == 0) digit_1_hour = CLR;
-          digit_2_hour = (set_hour / 1 ) % 10;
-          Serial.println(set_hour);
-          Flip.Matrix_7Seg(S,T,digit_1_hour,digit_2_hour);
-        break;
+        if(digit_1 == 0) digit_1 = CLR;
+        digit_2 = (set_hour / 1 ) % 10;
+        Serial.println(set_hour);
+        Flip.Matrix_7Seg(S,H,digit_1,digit_2);
+      }
 
-        case 3:
-          Serial.print("Sleep time: ");
-          if(set_am_pm == 0) {sleep_set_am_pm = AM; Flip.Matrix_7Seg(S,T,A,M); Serial.println("AM");}
-          if(set_am_pm == 1) {sleep_set_am_pm = PM; Flip.Matrix_7Seg(S,T,P,M); Serial.println("PM");}
-        break;
+      if(time_settings_level == 3)
+      {
+        Serial.print("Sleep time: ");
+        if(sleep_am_pm == AM) {Flip.Matrix_7Seg(S,F,A,M); Serial.println("AM");}
+        if(sleep_am_pm == PM) {Flip.Matrix_7Seg(S,F,P,M); Serial.println("PM");}
+      }
 
-        case 4:
-          Serial.print("Wake time: ");
-          if(time_hr == HR12 && set_hour == 0) set_hour = 1;
-          wake_set_hour = set_hour;
-          digit_1_hour = (set_hour / 10) % 10;
+      if(time_settings_level == 4)
+      {
+        Serial.print("Wake time: ");
+        wake_hour = set_hour;
+        digit_1 = (set_hour / 10) % 10;
           
-          if(digit_1_hour == 0) digit_1_hour = CLR;
-          digit_2_hour = (set_hour / 1 ) % 10;
-          Serial.println(set_hour);
-          Flip.Matrix_7Seg(W,T,digit_1_hour,digit_2_hour);
-        break;
+        if(digit_1 == 0) digit_1 = CLR;
+        digit_2 = (set_hour / 1 ) % 10;
+        Serial.println(set_hour);
+        Flip.Matrix_7Seg(W,H,digit_1,digit_2);
+      }
 
-        case 5:
-          Serial.print("Wake time: ");
-          if(set_am_pm == 0) {wake_set_am_pm = AM; Flip.Matrix_7Seg(W,T,A,M); Serial.println("AM");}
-          if(set_am_pm == 1) {wake_set_am_pm = PM; Flip.Matrix_7Seg(W,T,P,M); Serial.println("PM");}
-        break;
+      if(time_settings_level == 5)
+      {
+        Serial.print("Wake time: ");
+        if(wake_am_pm == AM) {Flip.Matrix_7Seg(W,F,A,M); Serial.println("AM");}
+        if(wake_am_pm == PM) {Flip.Matrix_7Seg(W,F,P,M); Serial.println("PM");}
       }
 
       updateDisplay = false;
@@ -875,27 +960,7 @@ void SettingTime(void)
 
     ClearPressButtonFlags();
 
-  } while(settings_level < 6);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  } while(timeSettingsStatus == true); // Stay in the speed settings until all digits are set
 
 
 
@@ -904,19 +969,19 @@ void SettingTime(void)
   Serial.println("------------------------");
   
   // Convert entered individual digits to the format supported by RTC
-  uint8_t hour_time = (digit[0] * 10) + digit[1];
-  uint8_t minute_time = (digit[2] * 10) + digit[3];
+  hour_time = (digit[0] * 10) + digit[1];
+  minute_time = (digit[2] * 10) + digit[3];
 
   if(time_hr == HR12)
   {
-    if(time_set_am_pm == PM && hour_time != 12) hour_time = hour_time + 12;
-    if(time_set_am_pm == AM && hour_time == 12) hour_time = 0;
+    if(time_am_pm == PM && hour_time != 12) hour_time = hour_time + 12;
+    if(time_am_pm == AM && hour_time == 12) hour_time = 0;
 
-    if(sleep_set_am_pm == PM && sleep_set_hour != 12) sleep_hour = sleep_set_hour + 12;
-    if(sleep_set_am_pm == AM && sleep_set_hour == 12) sleep_hour = 0;
+    if(sleep_am_pm == PM && sleep_set_hour != 12) sleep_hour = sleep_set_hour + 12;
+    if(sleep_am_pm == AM && sleep_set_hour == 12) sleep_hour = 0;
 
-    if(wake_set_am_pm == PM && wake_set_hour != 12) wake_hour = wake_set_hour + 12;
-    if(wake_set_am_pm == AM && wake_set_hour == 12) wake_hour = 0;
+    if(wake_am_pm == PM && wake_set_hour != 12) wake_hour = wake_set_hour + 12;
+    if(wake_am_pm == AM && wake_set_hour == 12) wake_hour = 0;
   }
 
 

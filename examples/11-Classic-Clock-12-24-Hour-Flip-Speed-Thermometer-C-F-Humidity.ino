@@ -54,20 +54,20 @@ OneButton button2(B2_PIN, false, false);
 OneButton button3(B3_PIN, false, false);
 
 // The flags to store status of the settings
-volatile bool modeSettingsStatus = false;
-volatile bool timeSettingsStatus = false;
-volatile bool speedSettingsStatus = false;
-volatile bool tempSettingsStatus = false;
+bool modeSettingsStatus = false;
+bool timeSettingsStatus = false;
+bool speedSettingsStatus = false;
+bool tempSettingsStatus = false;
 
 // Flags for storing button press status
-volatile bool shortPressButton1Status = false;
-volatile bool shortPressButton3Status = false;
-volatile bool longPressButton1Status = false;
-volatile bool longPressButton2Status = false;
-volatile bool longPressButton3Status = false;
+bool shortPressButton1Status = false;
+bool shortPressButton3Status = false;
+bool longPressButton1Status = false;
+bool longPressButton2Status = false;
+bool longPressButton3Status = false;
 
 // RTC interrupt flag
-volatile bool interruptRtcStatus = false;
+bool interruptRtcStatus = false;
 
 // A flag that stores the time display status, if the flag is set, 
 // the current time will be displayed
@@ -75,7 +75,7 @@ volatile bool timeDisplayStatus = false;
 
 // A flag that stores the temperature display status, if the flag is set, 
 // the current temperature will be displayed
-volatile bool tempDisplayStatus = false;
+bool tempDisplayStatus = false;
 
 // Declare structure that allows convenient access to the time elements:
 // - tm.Hour - hours
@@ -99,10 +99,10 @@ unsigned long sequence_start_time = 0;
 unsigned long sequence_current_time = 0;
 
 // Time, temperature and humidity sequence display status flags
-volatile bool sequenceRunning= false;         // Indicates if the sequence is currently running
-volatile bool sequenceSecondRun = false;      // Flag for second sequence if the temp/hum display interval is set to 30s
-volatile bool firstSequenceComplete = false;  // Flag to indicate the first sequence has completed
-volatile bool secondSequenceComplete = false; // Flag to indicate the second sequence has completed
+bool sequenceRunning= false;         // Indicates if the sequence is currently running
+bool sequenceSecondRun = false;      // Flag for second sequence if the temp/hum display interval is set to 30s
+bool firstSequenceComplete = false;  // Flag to indicate the first sequence has completed
+bool secondSequenceComplete = false; // Flag to indicate the second sequence has completed
 
 // Variable defining the current level of the time/temperature/humidity display sequence
 uint8_t sequence_level = 0;
@@ -120,16 +120,16 @@ static const uint8_t AM = 0;
 static const uint8_t PM = 1;
 
 // The values is stored in eeprom memory and read during setup
-volatile uint8_t flip_disc_delay_time = 0; // Flip disc delay/speed effect [ms]
-volatile uint8_t leading_zero = 0;         // Leading zero display ON/OFF
-volatile uint8_t rest_period = 0;          // Clock rest period ON/OFF
-volatile uint8_t sleep_hour = 0;           // Hour to turn off the clock
-volatile uint8_t wake_hour = 0;            // Hour to turn on the clock
-volatile uint8_t time_hr = 0;              // Time 12/24 hour clock
-volatile uint8_t temp_on_off = 0;          // Temperature ON/OFF
-volatile uint8_t temp_c_f = 0;             // Temparature C/F - Celsius/Fahrenheit
-volatile uint8_t hum_on_off = 0;           // Humidity ON/OFF
-volatile uint8_t temp_hum_fq = 0;          // Temperature and humidity display frequency - 30/60 seconds
+uint8_t flip_disc_delay_time = 0; // Flip disc delay/speed effect [ms]
+uint8_t leading_zero = 0;         // Leading zero display ON/OFF
+uint8_t rest_period = 0;          // Clock rest period ON/OFF
+uint8_t sleep_hour = 0;           // Hour to turn off the clock
+uint8_t wake_hour = 0;            // Hour to turn on the clock
+uint8_t time_hr = 0;              // Time 12/24 hour clock
+uint8_t temp_on_off = 0;          // Temperature ON/OFF
+uint8_t temp_c_f = 0;             // Temparature C/F - Celsius/Fahrenheit
+uint8_t hum_on_off = 0;           // Humidity ON/OFF
+uint8_t temp_hum_fq = 0;          // Temperature and humidity display frequency - 30/60 seconds
 
 // Eeprom addresses where settings are stored
 static const uint16_t ee_delay_address = 0;        // Flip disc delay/speed effect
@@ -886,8 +886,8 @@ void SettingTime(void)
 
 
 
-  Serial.println("Saving time settings to eeprom memory");
-  Serial.println();
+  Serial.println("Settings have been saved");
+  Serial.println("------------------------");
   
   // Convert entered individual digits to the format supported by RTC
   uint8_t hour_time = (digit[0] * 10) + digit[1];
@@ -946,33 +946,42 @@ void SettingSpeed(void)
 
   modeSettingsStatus = true;
   int speed_index = 0;
+  bool updateDisplay = true;
 
   Serial.println();
   Serial.println("FLIP DISC SPEED/DELAY EFFECT SETTINGS");
   
-  // The delay/speed effect is used only when displaying the time,
-  // during delay/speed settings, the default value is 0
-  flip_disc_delay_time = 0;
-  Flip.Delay(flip_disc_delay_time);
-
-  Flip.Display_3x1(1, 1,0,1); // Clear the dots
+  Flip.Delay(0);
+  Flip.Display_3x1(1, 0,0,0); // Clear dots
   Flip.Matrix_7Seg(S,P,E,D);
   delay(1500);
 
   // Display the first digit to set
-  Flip.Matrix_7Seg(S,P,0,0);
+  Flip.Display_3x1(1, 1,1,0); // Set dots
+  Flip.Display_7Seg(1,S); Flip.Display_7Seg(2,P); // Display "SP" letters
   Serial.print("Speed/delay: "); Serial.print("0"); Serial.println("ms"); 
 
   do // Stay in the speed/delay settings until the value is set
   {
     WatchButtons();
-
+    
     if(shortPressButton1Status == true || shortPressButton3Status == true)
     {      
-      // Top button "+1", bottom button "-1"
-      if(shortPressButton1Status == true) speed_index++;
-      if(shortPressButton3Status == true) speed_index--;
+      if(shortPressButton1Status == true) speed_index++; // Top button "+1"
+      if(shortPressButton3Status == true) speed_index--; // Bottom button "-1"
 
+      ClearPressButtonFlags();
+      updateDisplay = true;
+    }
+    
+    if(longPressButton2Status == true)
+    {
+      ClearPressButtonFlags();
+      speedSettingsStatus = false;
+    } 
+
+    if(updateDisplay == true)
+    {
       if(speed_index > 6) speed_index = 0;
       if(speed_index < 0) speed_index = 6;
 
@@ -986,21 +995,13 @@ void SettingSpeed(void)
 
       Flip.Display_7Seg(3, digit3);
       Flip.Display_7Seg(4, digit4);
-      
-      ClearPressButtonFlags();
-    }
 
-    if(longPressButton2Status == true)
-    {
-      speedSettingsStatus = false;
-      Serial.println();
-      ClearPressButtonFlags();
+      updateDisplay = false;
     }
-
   } while(speedSettingsStatus == true); // Stay in the speed settings until all digits are set 
 
-  Serial.println("Saving flip disc speed/delay effect settings to eeprom memory");
-  Serial.println();
+  Serial.println("Settings have been saved");
+  Serial.println("------------------------");
   
   EEPROM.write(ee_delay_address, flip_disc_delay_time);
   
@@ -1102,8 +1103,8 @@ void SettingTemp(void)
 
   } while(tempSettingsStatus == true); // Stay in the speed settings until all digits are set
 
-  Serial.println("Saving temperature & humidity settings to eeprom memory");
-  Serial.println();
+  Serial.println("Settings have been saved");
+  Serial.println("------------------------");
 
 /*  
   // Write setting options into memory

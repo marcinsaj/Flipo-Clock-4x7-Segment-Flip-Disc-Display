@@ -69,6 +69,22 @@ bool longPressButton3Status = false;
 // RTC interrupt flag
 bool interruptRtcStatus = false;
 
+
+
+
+
+
+volatile bool clockStatus = true;
+
+
+
+
+
+
+
+
+
+
 // A flag that stores the time display status, if the flag is set, 
 // the current time will be displayed
 volatile bool timeDisplayStatus = false;
@@ -252,13 +268,6 @@ void setup()
   if(hum_on_off != ON && hum_on_off != OFF) hum_on_off = OFF;              // Turn off humidity display
   if(temp_hum_fq != THFQ60 && temp_hum_fq != THFQ30) temp_hum_fq = THFQ60; // Set the temperature and humidity display frequency to 60 seconds
 
-
-  hum_on_off = ON;
-  temp_on_off = ON;
-  temp_hum_fq = THFQ60;
-
-
-
   
   DisplayTime();
 }
@@ -272,6 +281,11 @@ void loop(void)
   if(timeSettingsStatus == true) SettingTime();
   if(speedSettingsStatus == true) SettingSpeed();
   if(tempSettingsStatus == true) SettingTemp();
+}
+
+void DisplayRestPeriod(void)
+{
+  Flip.Matrix_7Seg(HLM,HLM,HLM,HLM);
 }
 
 /************************************************************************************************/
@@ -533,7 +547,7 @@ void SettingTime(void)
   uint8_t settings_level = 0;
   bool set_time_hr = time_hr;
   bool set_leading_zero = leading_zero;
-  bool update_display = true;
+  bool updateDisplay = true;
 
   do
   {
@@ -543,18 +557,18 @@ void SettingTime(void)
     {
       if(settings_level == 0) set_time_hr = !set_time_hr;
       if(settings_level == 1) set_leading_zero = !set_leading_zero;
-      update_display = true;    
+      updateDisplay = true;    
     }
     
     if(longPressButton2Status == true) 
     {
       settings_level++;
-      update_display = true;
+      updateDisplay = true;
     } 
 
-    if(update_display == true)
+    if(updateDisplay == true)
     {
-      update_display = false;
+      updateDisplay = false;
 
       switch(settings_level) 
       {
@@ -601,7 +615,7 @@ void SettingTime(void)
 
 
   settings_level = 1;
-  update_display = true;
+  updateDisplay = true;
 
   do  // Stay in the time settings until all digits are set
   {
@@ -705,19 +719,19 @@ void SettingTime(void)
     if(longPressButton2Status == true)
     {
       settings_level++;
-      update_display = true;
+      updateDisplay = true;
     
       ClearPressButtonFlags();
     }
 
-    if(update_display == true)
+    if(updateDisplay == true)
     {
       if(settings_level == 1) {Flip.Matrix_7Seg(digit[0],HLM,HLM,HLM); Serial.print(digit[0]); Serial.println("---");}
       if(settings_level == 2) {Flip.Matrix_7Seg(HLM,digit[1],HLM,HLM); Serial.print("-"); Serial.print(digit[1]); Serial.println("--");}
       if(settings_level == 3) {Flip.Matrix_7Seg(HLM,HLM,digit[2],HLM); Serial.print("--"); Serial.print(digit[2]); Serial.println("-");}
       if(settings_level == 4) {Flip.Matrix_7Seg(HLM,HLM,HLM,digit[3]); Serial.print("---"); Serial.println(digit[3]);}
 
-      update_display = false;
+      updateDisplay = false;
     }
 
   } while(settings_level < 5); // Stay in the time settings until all digits are set
@@ -737,7 +751,7 @@ void SettingTime(void)
   Flip.Display_3x1(1, 1,1,0); // Set the dots
 
   settings_level = 0;
-  update_display = true;
+  updateDisplay = true;
 
   bool time_set_am_pm = 0;
   bool sleep_set_am_pm = 0;
@@ -780,7 +794,7 @@ void SettingTime(void)
       if(settings_level == 0 || settings_level == 3 || settings_level == 5) set_am_pm = !set_am_pm;
       if(settings_level == 1) set_rest_period = !set_rest_period;
 
-      update_display = true;
+      updateDisplay = true;
     }  
     
     if(longPressButton2Status == true) 
@@ -789,7 +803,7 @@ void SettingTime(void)
       set_hour = 0;
       set_am_pm = 0;
       
-      update_display = true;
+      updateDisplay = true;
     }
     
     // If the time is set to 24 hours, there is no need to set the time format AM/PM
@@ -803,7 +817,7 @@ void SettingTime(void)
     // If the clock rest period has been disabled, skip the rest of the options and exit the settings
     if(rest_period == OFF && settings_level == 2) settings_level = 6; 
 
-    if(update_display == true)
+    if(updateDisplay == true)
     {      
       switch(settings_level) 
       {
@@ -856,7 +870,7 @@ void SettingTime(void)
         break;
       }
 
-      update_display = false;
+      updateDisplay = false;
     } 
 
     ClearPressButtonFlags();
@@ -935,6 +949,46 @@ void SettingTime(void)
   DisplayTime();
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /************************************************************************************************/
 void SettingSpeed(void)
 {
@@ -944,22 +998,29 @@ void SettingSpeed(void)
   // we need to reset the sequence flag
   sequenceRunning = false;
 
+  // Settings are active
   modeSettingsStatus = true;
-  int speed_index = 0;
-  bool updateDisplay = true;
 
   Serial.println();
   Serial.println("FLIP DISC SPEED/DELAY EFFECT SETTINGS");
   
   Flip.Delay(0);
-  Flip.Display_3x1(1, 0,0,0); // Clear dots
+  Flip.Display_3x1(1, 0,0,0);                     // Clear dots
   Flip.Matrix_7Seg(S,P,E,D);
   delay(1500);
+  Flip.Display_3x1(1, 1,1,0);                     // Set dots
+  Flip.Display_7Seg(1,S);                         // Display "S"
 
-  // Display the first digit to set
-  Flip.Display_3x1(1, 1,1,0); // Set dots
-  Flip.Display_7Seg(1,S); Flip.Display_7Seg(2,P); // Display "SP" letters
-  Serial.print("Speed/delay: "); Serial.print("0"); Serial.println("ms"); 
+  int speed_index = 0;
+  bool updateDisplay = true;
+
+  // To correctly display the current settings we need to find speed_index, 
+  // which is the place where the current value is in flipSpeed[] array. 
+  // Then after entering the settings we start from the current value.
+  for(int i = 0; i < 6; i++)
+  {
+    if(flip_disc_delay_time == flipSpeed[i]) speed_index = i;
+  }
 
   do // Stay in the speed/delay settings until the value is set
   {
@@ -1012,7 +1073,9 @@ void SettingSpeed(void)
 
   modeSettingsStatus = false;
   timeDisplayStatus = false;
-  DisplayTime();
+  
+  if(clockStatus == ON) DisplayTime();
+  if(clockStatus == OFF) DisplayRestPeriod();
 }
 
 /************************************************************************************************/
@@ -1024,22 +1087,20 @@ void SettingTemp(void)
   // we need to reset the sequence flag
   sequenceRunning = false;
 
+  // Settings are active
   modeSettingsStatus = true;
-  uint8_t temp_settings_level = 1;
-  bool set_value = 0;
-  bool show_current_settings = true;
 
   Serial.println();
   Serial.println("TEMPERATURE & HUMIDITY SETTINGS");
 
-  // The speed/delay effect is used only when displaying the time 
-  // During time settings, the default value is 0
   Flip.Delay(0);
-
   Flip.Matrix_7Seg(T,E,M,P);
   Flip.Display_3x1(1, 0,0,0); // Clear the dots
   delay(1500); 
   Flip.Display_3x1(1, 1,1,0); // Set the dots
+
+  uint8_t temp_settings_level = 0;
+  bool updateDisplay = true;
 
   do // Stay in settings until all values are set
   {
@@ -1047,80 +1108,78 @@ void SettingTemp(void)
 
     if(shortPressButton1Status == true || shortPressButton3Status == true)
     {
-      set_value = !set_value;
-      show_current_settings = true;
+      if(temp_settings_level == 0) temp_on_off = !temp_on_off;
+      if(temp_settings_level == 1) temp_c_f = !temp_c_f;
+      if(temp_settings_level == 2) hum_on_off = !hum_on_off;
+      if(temp_settings_level == 3) temp_hum_fq = !temp_hum_fq; 
+
+      updateDisplay = true;
       ClearPressButtonFlags();
     }
 
     if(longPressButton2Status == true)
     {
       temp_settings_level++;
-      if(temp_settings_level > 4) tempSettingsStatus = false;
+      if(temp_settings_level <= 3) updateDisplay = true;        // Stay in settings
+      if(temp_settings_level >  3) tempSettingsStatus = false;  // Exit settings
 
-      Serial.println();
-      set_value = 0;
-
-      show_current_settings = true;
       ClearPressButtonFlags();
     }
 
-  if(show_current_settings == true)
-  {
+  if(updateDisplay == true)
+  {      
+    if(temp_settings_level == 0)
+    {
+      Serial.print("Temperature display: ");
+      if(temp_on_off == OFF) {Flip.Matrix_7Seg(T,CLR,O,F); Serial.println("OFF");}
+      if(temp_on_off == ON) {Flip.Matrix_7Seg(T,CLR,O,N); Serial.println("ON");}
+    }
+
     if(temp_settings_level == 1)
     {
-      temp_on_off = set_value;
-      Serial.print("Temperature display: ");
-      if(temp_on_off == OFF) {Flip.Matrix_7Seg(T,P,O,F); Serial.println("OFF");}
-      if(temp_on_off == ON) {Flip.Matrix_7Seg(T,P,O,N); Serial.println("ON");}
+      Serial.print("Temperature: ");
+      if(temp_c_f == TPF) {Flip.Matrix_7Seg(D,CLR,DEG,F); Serial.println("°F");}
+      if(temp_c_f == TPC) {Flip.Matrix_7Seg(D,CLR,DEG,C); Serial.println("°C");}
     }
 
     if(temp_settings_level == 2)
     {
-      temp_c_f = set_value;
-      Serial.print("Temperature: ");
-      if(temp_c_f == TPF) {Flip.Matrix_7Seg(T,P,DEG,F); Serial.println("°F");}
-      if(temp_c_f == TPC) {Flip.Matrix_7Seg(T,P,DEG,C); Serial.println("°C");}
+      Serial.print("Humidity display: ");
+      if(hum_on_off == OFF) {Flip.Matrix_7Seg(H,CLR,O,F); Serial.println("OFF");}
+      if(hum_on_off == ON) {Flip.Matrix_7Seg(H,CLR,O,N); Serial.println("ON");}
     }
 
     if(temp_settings_level == 3)
     {
-      hum_on_off = set_value;
-      Serial.print("Humidity display: ");
-      if(hum_on_off == OFF) {Flip.Matrix_7Seg(H,U,O,F); Serial.println("OFF");}
-      if(hum_on_off == ON) {Flip.Matrix_7Seg(H,U,O,N); Serial.println("ON");}
-    }
-
-    if(temp_settings_level == 4)
-    {
-      temp_hum_fq = set_value;
       Serial.print("Temperature and/or Humidity display frequency: "); 
-      if(temp_hum_fq == THFQ60) {Flip.Matrix_7Seg(T,H,6,0); Serial.println("60 seconds");}
-      if(temp_hum_fq == THFQ30) {Flip.Matrix_7Seg(T,H,3,0); Serial.println("30 seconds");}
+      if(temp_hum_fq == THFQ60) {Flip.Matrix_7Seg(F,CLR,6,0); Serial.println("60 seconds");}
+      if(temp_hum_fq == THFQ30) {Flip.Matrix_7Seg(F,CLR,3,0); Serial.println("30 seconds");}
     }
 
-    show_current_settings = false;
+    updateDisplay = false;
   }  
 
   } while(tempSettingsStatus == true); // Stay in the speed settings until all digits are set
 
   Serial.println("Settings have been saved");
   Serial.println("------------------------");
-
-/*  
-  // Write setting options into memory
+  
+  // Save settings
   EEPROM.write(ee_temp_on_off_address, temp_on_off);
   EEPROM.write(ee_temp_c_f_address, temp_c_f);
-  EEPROM.write(ee_temp_fq_address, temp_fq);
   EEPROM.write(ee_hum_on_off_address, hum_on_off);
+  EEPROM.write(ee_temp_hum_fq_address, temp_hum_fq);
 
   // Required for Arduino Nano ESP32, saves the changes to the EEPROM
   #if defined(ARDUINO_ARCH_ESP32)
     EEPROM.commit(); 
   #endif
-*/
+
   modeSettingsStatus = false;
   timeDisplayStatus = false;
-  DisplayTime();
+  
+  if(clockStatus == ON) DisplayTime();
+  if(clockStatus == OFF) DisplayRestPeriod();
 }
 
 /************************************************************************************************/

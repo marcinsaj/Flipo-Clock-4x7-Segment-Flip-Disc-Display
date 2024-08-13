@@ -1,17 +1,14 @@
-not ready
 /*-----------------------------------------------------------------------------------------------*
  * 7-Segment Flip-disc Clock by Marcin Saj https://flipo.io                                      *
  * https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display                        *
  *                                                                                               *
- * Classic 24-hour Clock                                                                         *
+ * Classic 12/24-hour Clock                                                                      *
  * + Flip Disc Speed/Delay Settings                                                              *
  * + Time Settings                                                                               *
  * + Temperature & Humidity Settings                                                             *
  *                                                                                               *
  * Attention!!! - Firmware Update Instructions - https://bit.ly/4x7SEG-CLOCK-FIRMWARE-UPDATE     *
- * Flip Disc Speed/Delay Settings Instructions - https://bit.ly/4x7SEG-CLOCK-SPEED-SET           *
- * Time Setting Instructions - https://bit.ly/4x7SEG-CLOCK-TIME-SET                              *
- * Temperature & Humidity Setting Instructions -                                                 *
+ * Settings Instructions -                                                                       *
  *                                                                                               *
  * Setup:                                                                                        *
  * Assembly Instructions - https://bit.ly/Flip-Disc-Clock-Assembly                               *
@@ -95,6 +92,40 @@ bool currentTimeStatus = false;
 // the current temperature will be displayed
 bool tempDisplayStatus = false;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+float humidity = 0;
+float temperature_celsius = 0;
+float temperature_fahrenheit = 0;
+
+// Temperature and humidity measurement status flag
+bool measurementStatus = false;
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Declare structure that allows convenient access to the time elements:
 // - tm.Hour - hours
 // - tm.Minute - minutes
@@ -132,8 +163,8 @@ static const uint8_t TPF = 0;    // Temperature in Fahrenheit
 static const uint8_t TPC = 1;    // Temperature in Celsius 
 static const uint8_t THFQ60 = 0; // Every 60 seconds - temperature and humidity display frequency
 static const uint8_t THFQ30 = 1; // Every 30 seconds - temperature and humidity display frequency
-static const uint8_t AM = 0;
-static const uint8_t PM = 1;
+static const uint8_t AM = 0;     // Time is AM
+static const uint8_t PM = 1;     // Time is PM
 
 // The values is stored in eeprom memory and read during setup
 uint8_t flip_disc_delay_time = 0; // Flip disc delay/speed effect [ms]
@@ -545,7 +576,7 @@ void DisplayTimeAndTemperature(void)
 void MeasureTemperatureAndHumidity(void)
 {
   // Reading temperature and humidity
-  float humidity = dht.readHumidity();
+  humidity = dht.readHumidity();
   // Read temperature as Celsius (the default)
   float celsius = dht.readTemperature();
   // Read temperature as Fahrenheit (isFahrenheit = true)
@@ -555,112 +586,96 @@ void MeasureTemperatureAndHumidity(void)
   if (isnan(humidity) || isnan(celsius) || isnan(fahrenheit)) return;
 
   // Compute heat index in Fahrenheit (the default)
-  float heat_fahrenheit = dht.computeHeatIndex(fahrenheit, humidity);
+  temperature_fahrenheit = dht.computeHeatIndex(fahrenheit, humidity);
   // Compute heat index in Celsius (isFahreheit = false)
-  float heat_celsius = dht.computeHeatIndex(celsius, humidity, false);
+  temperature_celsius = dht.computeHeatIndex(celsius, humidity, false);
 
-  Serial.print(F("Humidity: "));
+  Serial.print("Humidity: ");
   Serial.print(humidity);
-  Serial.print(F("%  Temperature: "));
-  Serial.print(heat_celsius);
-  Serial.print(F("°C  "));
-  Serial.print(heat_fahrenheit);
-  Serial.println(F("°F"));
+  Serial.print("%  Temperature: ");
+  Serial.print(temperature_celsius);
+  Serial.print("°C  ");
+  Serial.print(temperature_fahrenheit);
+  Serial.println("°F");
 
   // Rounding the temperature value ​​and preparing data for display
-  float temperature = (heat_celsius + 0.05) * 10 ;
+  temperature_fahrenheit = temperature_fahrenheit + 0.05;
+
+  if(temperature_fahrenheit < 100) temperature_fahrenheit = temperature_fahrenheit * 10;
+
+  temperature_celsius = (temperature_celsius + 0.05) * 10 ;
   humidity = humidity * 10;
 
-  DisplayData(humidity, H);
-
-  // How long to display humidity
-  delay(1000 * display_delay_humidity);
-
-  DisplayData(temperature, C);
+  measurementStatus = true;
 }
 
-
-
-
-
-
-/*
-
-void DisplayData(float data, uint8_t type)
+/************************************************************************************************/
+void DisplayTemperature(void)
 {
-  int data_value = int (data);
+  MeasureTemperatureAndHumidity();
+
+  uint8_t type_symbol = 0;
+  float data_temp = 0;
+
+  if(temp_c_f == TPF) {data_temp = temperature_fahrenheit; type_symbol = F;} 
+  if(temp_c_f == TPC) {data_temp = temperature_celsius; type_symbol = C;} 
+
+  int data_value = int (data_temp);
   
   uint8_t digit1 = (data_value / 100) % 10;
   uint8_t digit2 = (data_value / 10) % 10;
   uint8_t digit3 = (data_value / 1) % 10;
 
-  Flip.Matrix_7Seg(digit1, digit2, digit3, type);
-}
-*/
+  if(leading_zero == OFF && digit1 == 0) digit1 = CLR;
+  
+  if(digit3 == 0) 
+  {
+    digit3 = DEG;
+    Flip.Display_3x1(1, 0,0,0);
+  }
+  else Flip.Display_3x1(1, 0,0,1);
 
-
-
-
-
-
-
-
-/************************************************************************************************/
-void DisplayTemperature(void)
-{
-  // The function is used to set the delay effect between flip discs. 
-  Flip.Delay(flip_disc_delay_time);
-  Flip.Matrix_7Seg(2,3,DEG,C);
-  Serial.println("DisplayTemperature");
-
+  Flip.Matrix_7Seg(digit1, digit2, digit3, type_symbol);
 }
 
 /************************************************************************************************/
 void DisplayHumidity(void)
 {
-  // The function is used to set the delay effect between flip discs. 
-  Flip.Delay(flip_disc_delay_time);
-  Flip.Matrix_7Seg(5,2,CLR,H);
-  Serial.println("DisplayHumidity");
+  // During the temperature and humidity display sequence, the temperature is always displayed first 
+  // and then the measurement is taken. However, it may happen that the temperature display is turned off, 
+  // then we have to take the measurement.
+  if(temp_on_off == OFF || measurementStatus == false) 
+  {
+    MeasureTemperatureAndHumidity();
+    // The flag is set to true after the measurement is taken 
+    // and therefore we need to reset it.
+    measurementStatus = false;
+  }
 
+  int data_hum = int (humidity);
+
+  uint8_t digit1 = (data_hum / 100) % 10;
+  uint8_t digit2 = (data_hum / 10) % 10;
+  uint8_t digit3 = (data_hum / 1) % 10;
+
+  uint8_t type_symbol = 0;
+
+  if(leading_zero == OFF && digit1 == 0) digit1 = CLR;
+  
+  if(digit3 == 0) 
+  {
+    digit3 = PFH;
+    type_symbol = PSH;
+    Flip.Display_3x1(1, 0,0,0);
+  }
+  else 
+  {
+    type_symbol = H;
+    Flip.Display_3x1(1, 0,0,1);
+  }
+
+  Flip.Matrix_7Seg(digit1, digit2, digit3, type_symbol);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /************************************************************************************************/
 void SettingSpeed(void)

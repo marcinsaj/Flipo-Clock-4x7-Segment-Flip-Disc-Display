@@ -1010,6 +1010,11 @@ void SettingTime(void)
         if(digit[time_settings_level - 1] == 1 && digit[time_settings_level] > 2) digit[time_settings_level] = 0;
         if(digit[time_settings_level - 1] == 0 && digit[time_settings_level] == 0) digit[time_settings_level] = 1;
       }
+
+      if(time_settings_level == 1 && time_hr == HR24)
+      {
+        if(digit[time_settings_level - 1] == 2 && digit[time_settings_level] > 3) digit[time_settings_level] = 0;
+      }
       
       current_digit = digit[time_settings_level];
       updateDigit = false;

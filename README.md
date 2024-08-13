@@ -24,7 +24,7 @@
 - [x] [08-Classic-Clock-24-Hour-Flip-Speed](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/08-Classic-Clock-24-Hour-Flip-Speed.ino)
 - [x] [09-Classic-Clock-12-Hour](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/09-Classic-Clock-12-Hour.ino)
 - [x] [10-Classic-Clock-12-Hour-Flip-Speed](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/10-Classic-Clock-12-Hour-Flip-Speed.ino)
-- [ ] 11-Final-Clock-Code - work in progress
+- [ ] 11-Final-Clock-Code - work in progress :thumbsup:
 ---
 
 ### Setup
@@ -34,7 +34,7 @@
 - [Optional Wall Instalation](https://bit.ly/FDC-WALL)
 - [Time Settings Instructions](https://bit.ly/4x7SEG-CLOCK-TIME-SET) - only for code no. 7, 8, 9, 10. 
 - [Flip Disc Speed/Delay Settings Instructions](https://bit.ly/4x7SEG-CLOCK-SPEED-SET) - only for code no. 8, 10.
-- Final Settings Instructions - only for code no. 11 - work in progress
+- Final Settings Instructions - only for code no. 11 - work in progress :thumbsup:
 ---
 
 ### Datasheet

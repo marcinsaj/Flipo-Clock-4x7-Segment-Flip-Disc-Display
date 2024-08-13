@@ -24,7 +24,7 @@
 - [x] [08-Classic-Clock-24-Hour-Flip-Speed](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/08-Classic-Clock-24-Hour-Flip-Speed.ino)
 - [x] [09-Classic-Clock-12-Hour](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/09-Classic-Clock-12-Hour.ino)
 - [x] [10-Classic-Clock-12-Hour-Flip-Speed](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/10-Classic-Clock-12-Hour-Flip-Speed.ino)
-- [ ] 11-Classic-Clock-12-24-Hour-Flip-Speed-Thermometer-C-F-Humidity - to do
+- [ ] 11-Final-Clock-Code - work in progress
 ---
 
 ### Setup

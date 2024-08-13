@@ -1,4 +1,3 @@
-not ready
 /*-----------------------------------------------------------------------------------------------*
  * 7-Segment Flip-disc Clock by Marcin Saj https://flipo.io                                      *
  * https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display                        *
@@ -75,15 +74,6 @@ bool interruptRtcStatus = false;
 
 
 volatile bool clockStatus = true;
-
-
-
-
-
-
-
-
-
 
 // A flag that stores the time display status, if the flag is set, 
 // the current time will be displayed
@@ -268,7 +258,6 @@ void setup()
   if(hum_on_off != ON && hum_on_off != OFF) hum_on_off = OFF;              // Turn off humidity display
   if(temp_hum_fq != THFQ60 && temp_hum_fq != THFQ30) temp_hum_fq = THFQ60; // Set the temperature and humidity display frequency to 60 seconds
 
-  
   DisplayTime();
 }
 
@@ -276,8 +265,7 @@ void setup()
 void loop(void)
 {
   WatchButtons();
-  if(timeDisplayStatus == true) DisplayTimeAndTemperature();
-  
+  if(timeDisplayStatus == true) DisplayTimeAndTemperature(); 
   if(timeSettingsStatus == true) SettingTime();
   if(speedSettingsStatus == true) SettingSpeed();
   if(tempSettingsStatus == true) SettingTemp();
@@ -285,15 +273,14 @@ void loop(void)
 
 void DisplayRestPeriod(void)
 {
+  if(Display only-one)
+  Flip.Display_3x1(1, 0,0,0);
   Flip.Matrix_7Seg(HLM,HLM,HLM,HLM);
 }
 
 /************************************************************************************************/
 void DisplayTime(void)
-{  
-  // The function is used to set the delay effect between flip discs. 
-  Flip.Delay(flip_disc_delay_time);
-  
+{    
   // Get the time from the RTC and save it to the tm structure
   RTC_RX8025T.read(tm);
   
@@ -318,6 +305,9 @@ void DisplayTime(void)
   digit[2] = (minute_time / 10) % 10;
   digit[3] = (minute_time / 1) % 10;
 
+  // The function is used to set the delay effect between flip discs. 
+  Flip.Delay(flip_disc_delay_time);
+
   // Display the current time
   Flip.Display_3x1(1, 1,1,0);
   Flip.Matrix_7Seg(digit[0],digit[1],digit[2],digit[3]);
@@ -336,7 +326,31 @@ void DisplayTime(void)
 
 
 
+bool CheckRestPeriod(void)
+{
+  // Get the time from the RTC and save it to the tm structure
+  RTC_RX8025T.read(tm);
+  uint8_t current_hour = tm.Hour;
 
+  // This part of the code checks if the sleep_hour is greater than the wake_hour. 
+  // If so, it means that the time interval for the clock to be turned off passes through midnight
+  if(sleep_hour > wake_hour) 
+  {
+    // This condition checks if the current_hour is within the range where the clock should be turned off
+    if(current_hour >= sleep_hour || current_hour < wake_hour) clockStatus = false;
+    else clockStatus = true;
+  }
+  // If sleep_hour is not greater than wake_hour, it means that the time interval 
+  // in which the clock is to be turned off is within one day
+  else 
+  {
+    // This condition checks if the current_hour is within the range where the clock should be turned off
+    if(current_hour >= sleep_hour && current_hour < wake_hour) clockStatus = false;
+    else clockStatus = true;
+  }
+
+  return clockStatus;
+}
 
 
 
@@ -368,7 +382,16 @@ If it is set to 30 seconds, a new sequence will start 30 seconds after the first
 After the second cycle, the sequence will end. The next loop will start at the next full minute.*/
 void DisplayTimeAndTemperature(void)
 {  
-  if (sequenceRunning == false)     // If the sequence is not already running, initialize it 
+  clockStatus = CheckRestPeriod();
+
+  if(clockStatus == OFF) 
+  {
+    timeDisplayStatus = false;
+    DisplayRestPeriod();
+    return;
+  }
+  
+  if(sequenceRunning == false)     // If the sequence is not already running, initialize it 
   {
     sequence_start_time = millis(); // Record the start time
     sequence_level = 0;             // Start from the first state
@@ -850,7 +873,11 @@ void SettingTime(void)
     {
       if(time_settings_level == 0) time_settings_level = 1;
       if(time_settings_level == 3) time_settings_level = 4;
-      if(time_settings_level == 5) time_settings_level = 6;
+      if(time_settings_level == 5) 
+      {
+        time_settings_level = 6;
+        timeSettingsStatus = false;
+      }
     }
 
     // RTC does not support 12 hour time, a simple trick was used to determine AM/PM time in 12 hour system. 
@@ -859,6 +886,12 @@ void SettingTime(void)
     // If we have hours from 0 to 11, it is AM time, if from 12 to 23, it is PM.
     if(updateData == true)
     {
+      if(time_hr == HR24)
+      {
+        if(time_settings_level == 2) set_hour = sleep_hour;
+        if(time_settings_level == 4) set_hour = wake_hour; 
+      }
+      
       if(time_hr == HR12)
       {
         if(time_settings_level == 2)
@@ -1010,9 +1043,8 @@ void SettingTime(void)
   
   modeSettingsStatus = false;
   timeDisplayStatus = false;
-  
-  if(clockStatus == ON) DisplayTime();
-  if(clockStatus == OFF) DisplayRestPeriod();
+
+  DisplayTime();
 }
 
 /************************************************************************************************/
@@ -1099,9 +1131,8 @@ void SettingSpeed(void)
 
   modeSettingsStatus = false;
   timeDisplayStatus = false;
-  
-  if(clockStatus == ON) DisplayTime();
-  if(clockStatus == OFF) DisplayRestPeriod();
+
+  DisplayTime();
 }
 
 /************************************************************************************************/
@@ -1157,8 +1188,8 @@ void SettingTemp(void)
     if(temp_settings_level == 0)
     {
       Serial.print("Temperature display: ");
-      if(temp_on_off == OFF) {Flip.Matrix_7Seg(T,CLR,O,F); Serial.println("OFF");}
-      if(temp_on_off == ON) {Flip.Matrix_7Seg(T,CLR,O,N); Serial.println("ON");}
+      if(temp_on_off == OFF) {Flip.Matrix_7Seg(T,P,O,F); Serial.println("OFF");}
+      if(temp_on_off == ON) {Flip.Matrix_7Seg(T,P,O,N); Serial.println("ON");}
     }
 
     // If the temperature display has been disabled then 
@@ -1168,16 +1199,16 @@ void SettingTemp(void)
       if(temp_on_off == ON) 
       {
         Serial.print("Temperature: ");
-        if(temp_c_f == TPF) {Flip.Matrix_7Seg(D,CLR,DEG,F); Serial.println("°F");}
-        if(temp_c_f == TPC) {Flip.Matrix_7Seg(D,CLR,DEG,C); Serial.println("°C");}
+        if(temp_c_f == TPF) {Flip.Matrix_7Seg(T,D,DEG,F); Serial.println("°F");}
+        if(temp_c_f == TPC) {Flip.Matrix_7Seg(T,D,DEG,C); Serial.println("°C");}
       } else temp_settings_level = 2;
     } 
 
     if(temp_settings_level == 2)
     {
       Serial.print("Humidity display: ");
-      if(hum_on_off == OFF) {Flip.Matrix_7Seg(H,CLR,O,F); Serial.println("OFF");}
-      if(hum_on_off == ON) {Flip.Matrix_7Seg(H,CLR,O,N); Serial.println("ON");}
+      if(hum_on_off == OFF) {Flip.Matrix_7Seg(H,U,O,F); Serial.println("OFF");}
+      if(hum_on_off == ON) {Flip.Matrix_7Seg(H,U,O,N); Serial.println("ON");}
     }
 
     // If the temperature and humidity display has been disabled 
@@ -1187,8 +1218,8 @@ void SettingTemp(void)
       if(temp_on_off == ON || hum_on_off == ON)
       {
         Serial.print("Temperature and/or Humidity display frequency: "); 
-        if(temp_hum_fq == THFQ60) {Flip.Matrix_7Seg(F,CLR,6,0); Serial.println("60 seconds");}
-        if(temp_hum_fq == THFQ30) {Flip.Matrix_7Seg(F,CLR,3,0); Serial.println("30 seconds");}
+        if(temp_hum_fq == THFQ60) {Flip.Matrix_7Seg(F,Q,6,0); Serial.println("60 seconds");}
+        if(temp_hum_fq == THFQ30) {Flip.Matrix_7Seg(F,Q,3,0); Serial.println("30 seconds");}
       } else tempSettingsStatus = false;
     } 
 
@@ -1213,9 +1244,8 @@ void SettingTemp(void)
 
   modeSettingsStatus = false;
   timeDisplayStatus = false;
-  
-  if(clockStatus == ON) DisplayTime();
-  if(clockStatus == OFF) DisplayRestPeriod();
+
+  DisplayTime();
 }
 
 /************************************************************************************************/

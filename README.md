@@ -1,5 +1,7 @@
 ![Arduino](https://img.shields.io/badge/-Arduino-00979D?style=for-the-badge&logo=Arduino&logoColor=white)
 ## 7-Segment Flip-disc Clock & Thermometer & Hygrometer
+<a href="https://www.buymeacoffee.com/marcinsaj"><img src="https://github.com/marcinsaj/marcinsaj/blob/main/Buy-me-a-coffee.png" /></a> 
+</br>
 
 ### Troubleshooting
 > [!TIP]  

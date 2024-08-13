@@ -32,8 +32,9 @@
 - [Assembly Instructions - YouTube](https://youtu.be/WfsLnRaAHXM)
 - [Assembly Instructions - pdf](https://bit.ly/Flip-Disc-Clock-Assembly)
 - [Optional Wall Instalation](https://bit.ly/FDC-WALL)
-- [Time Settings Instructions](https://bit.ly/4x7SEG-CLOCK-TIME-SET)
-- [Flip Disc Speed/Delay Settings Instructions](https://bit.ly/4x7SEG-CLOCK-SPEED-SET) - only for code that supports these settings
+- [Time Settings Instructions](https://bit.ly/4x7SEG-CLOCK-TIME-SET) - only for code no. 7, 8, 9, 10. 
+- [Flip Disc Speed/Delay Settings Instructions](https://bit.ly/4x7SEG-CLOCK-SPEED-SET) - only for code no. 8, 10.
+- Final Settings Instructions - only for code no. 11 - work in progress
 ---
 
 ### Datasheet

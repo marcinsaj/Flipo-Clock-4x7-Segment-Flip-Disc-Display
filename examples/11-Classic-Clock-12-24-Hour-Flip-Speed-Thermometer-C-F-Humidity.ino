@@ -30,6 +30,13 @@ not ready
 #include <Wire.h>             // https://arduino.cc/en/Reference/Wire (included with Arduino IDE)
 #include <OneButton.h>        // https://github.com/mathertel/OneButton
 #include <EEPROM.h>           // https://www.arduino.cc/en/Reference/EEPROM
+#include <Adafruit_Sensor.h>  // https://github.com/adafruit/Adafruit_Sensor
+#include <DHT.h>              // https://github.com/adafruit/DHT-sensor-library
+
+#define DHT_PIN A0            // Digital pin connected to the DHT sensor
+#define DHTTYPE DHT22         // Sensor type
+
+DHT dht(DHT_PIN, DHTTYPE);    // Initialize DHT sensor
 
 // Attention: do not change! Changing these settings may physical damage the flip-disc displays.
 // Pin declaration for a dedicated controller
@@ -178,6 +185,9 @@ void setup()
   Flip.Pin(EN_PIN, CH_PIN, PL_PIN);
   
   pinMode(RTC_PIN, INPUT_PULLUP);
+
+  // Initialize DHT22 sensor
+  dht.begin();
 
   // RTC RX8025T initialization
   RTC_RX8025T.init();
@@ -532,6 +542,65 @@ void DisplayTimeAndTemperature(void)
 
 
 
+void MeasureTemperatureAndHumidity(void)
+{
+  // Reading temperature and humidity
+  float humidity = dht.readHumidity();
+  // Read temperature as Celsius (the default)
+  float celsius = dht.readTemperature();
+  // Read temperature as Fahrenheit (isFahrenheit = true)
+  float fahrenheit = dht.readTemperature(true);
+
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(humidity) || isnan(celsius) || isnan(fahrenheit)) return;
+
+  // Compute heat index in Fahrenheit (the default)
+  float heat_fahrenheit = dht.computeHeatIndex(fahrenheit, humidity);
+  // Compute heat index in Celsius (isFahreheit = false)
+  float heat_celsius = dht.computeHeatIndex(celsius, humidity, false);
+
+  Serial.print(F("Humidity: "));
+  Serial.print(humidity);
+  Serial.print(F("%  Temperature: "));
+  Serial.print(heat_celsius);
+  Serial.print(F("°C  "));
+  Serial.print(heat_fahrenheit);
+  Serial.println(F("°F"));
+
+  // Rounding the temperature value ​​and preparing data for display
+  float temperature = (heat_celsius + 0.05) * 10 ;
+  humidity = humidity * 10;
+
+  DisplayData(humidity, H);
+
+  // How long to display humidity
+  delay(1000 * display_delay_humidity);
+
+  DisplayData(temperature, C);
+}
+
+
+
+
+
+
+/*
+
+void DisplayData(float data, uint8_t type)
+{
+  int data_value = int (data);
+  
+  uint8_t digit1 = (data_value / 100) % 10;
+  uint8_t digit2 = (data_value / 10) % 10;
+  uint8_t digit3 = (data_value / 1) % 10;
+
+  Flip.Matrix_7Seg(digit1, digit2, digit3, type);
+}
+*/
+
+
+
+
 
 
 
@@ -555,6 +624,19 @@ void DisplayHumidity(void)
   Serial.println("DisplayHumidity");
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

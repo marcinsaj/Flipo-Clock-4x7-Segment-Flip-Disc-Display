@@ -1,3 +1,4 @@
+not ready
 /*-----------------------------------------------------------------------------------------------*
  * 7-Segment Flip-disc Clock by Marcin Saj https://flipo.io                                      *
  * https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display                        *
@@ -66,18 +67,22 @@ bool longPressButton2Status = false;
 bool longPressButton3Status = false;
 
 // RTC interrupt flag
-bool interruptRtcStatus = false;
+volatile bool interruptRtcStatus = false;
 
-
-
-
-
-
-volatile bool clockStatus = true;
+// When the clock enters Rest Period mode, 
+// to avoid cyclic display of the rest period state, i.e. 4 horizontal lines, 
+// the rest_period_counter is started. If the counter is different from 0, 
+// the display is not updated
+unsigned long rest_period_counter = 0;
 
 // A flag that stores the time display status, if the flag is set, 
 // the current time will be displayed
-volatile bool timeDisplayStatus = false;
+bool timeDisplayStatus = false;
+
+// The flag specifies whether the currently available time 
+// in the tm structure is up to date. If the time is current, 
+// there is no need to read the time from the RTC again
+bool currentTimeStatus = false;
 
 // A flag that stores the temperature display status, if the flag is set, 
 // the current temperature will be displayed
@@ -107,8 +112,6 @@ unsigned long sequence_current_time = 0;
 // Time, temperature and humidity sequence display status flags
 bool sequenceRunning= false;         // Indicates if the sequence is currently running
 bool sequenceSecondRun = false;      // Flag for second sequence if the temp/hum display interval is set to 30s
-bool firstSequenceComplete = false;  // Flag to indicate the first sequence has completed
-bool secondSequenceComplete = false; // Flag to indicate the second sequence has completed
 
 // Variable defining the current level of the time/temperature/humidity display sequence
 uint8_t sequence_level = 0;
@@ -156,7 +159,7 @@ static const uint8_t eeprom_size = 10;
 
 void rtcInterruptISR(void)
 {
-  timeDisplayStatus = true;
+  interruptRtcStatus = true;
 }
 
 /************************************************************************************************/
@@ -265,25 +268,71 @@ void setup()
 void loop(void)
 {
   WatchButtons();
+  if(interruptRtcStatus == true) CheckRestPeriod();
   if(timeDisplayStatus == true) DisplayTimeAndTemperature(); 
   if(timeSettingsStatus == true) SettingTime();
   if(speedSettingsStatus == true) SettingSpeed();
   if(tempSettingsStatus == true) SettingTemp();
 }
 
+/************************************************************************************************/
+// Keep watching the buttons
+void WatchButtons(void)
+{
+  button1.tick();
+  button2.tick();
+  button3.tick();
+
+  // If the time settings are not currently active,
+  // and if a long press of the middle or top button is detected, set corresponding flag
+  if(modeSettingsStatus == false)
+  {
+    if(longPressButton1Status == true) speedSettingsStatus = true;
+    if(longPressButton2Status == true) timeSettingsStatus = true;
+    if(longPressButton3Status == true) tempSettingsStatus = true;
+  }
+}
+
+/************************************************************************************************/
+// Button press handling functions
+void ShortPressButton1(void){shortPressButton1Status = true;}
+void ShortPressButton3(void){shortPressButton3Status = true;}
+void LongPressButton1(void){longPressButton1Status = true;}
+void LongPressButton2(void){longPressButton2Status = true;}
+void LongPressButton3(void){longPressButton3Status = true;}
+
+/************************************************************************************************/
+// Button flags clearing function
+void ClearPressButtonFlags(void)
+{
+  shortPressButton1Status = false;
+  shortPressButton3Status = false;
+  longPressButton1Status = false;
+  longPressButton2Status = false;
+  longPressButton3Status = false;
+}
+/************************************************************************************************/
+
 void DisplayRestPeriod(void)
 {
-  if(Display only-one)
   Flip.Display_3x1(1, 0,0,0);
   Flip.Matrix_7Seg(HLM,HLM,HLM,HLM);
+  Serial.println("Rest period");
+}
+
+/************************************************************************************************/
+void GetTimeRTC(void)
+{
+  // Get the time from the RTC and save it to the tm structure
+  RTC_RX8025T.read(tm);
+  currentTimeStatus = true;
 }
 
 /************************************************************************************************/
 void DisplayTime(void)
-{    
-  // Get the time from the RTC and save it to the tm structure
-  RTC_RX8025T.read(tm);
-  
+{  
+  if(currentTimeStatus == false) GetTimeRTC();
+
   uint8_t hour_time = tm.Hour;
   uint8_t minute_time = tm.Minute;
   
@@ -319,18 +368,17 @@ void DisplayTime(void)
   Serial.print(":");
   if(minute_time < 10) Serial.print("0");
   Serial.println(minute_time);
+
+  rest_period_counter = 0;
 }
 
-
-
-
-
-
-bool CheckRestPeriod(void)
+/************************************************************************************************/
+void CheckRestPeriod(void)
 {
-  // Get the time from the RTC and save it to the tm structure
-  RTC_RX8025T.read(tm);
+  GetTimeRTC();
   uint8_t current_hour = tm.Hour;
+  
+  bool clockStatus = false;
 
   // This part of the code checks if the sleep_hour is greater than the wake_hour. 
   // If so, it means that the time interval for the clock to be turned off passes through midnight
@@ -349,24 +397,22 @@ bool CheckRestPeriod(void)
     else clockStatus = true;
   }
 
-  return clockStatus;
+  if(clockStatus == true) 
+  {
+    rest_period_counter = 0;
+    timeDisplayStatus = true;
+  }
+
+  if(clockStatus == false) 
+  {
+    if(rest_period_counter == 0) DisplayRestPeriod();
+
+    rest_period_counter++;
+    timeDisplayStatus = false;
+  }
+
+  interruptRtcStatus = false;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /* The sequence is started every full minute after the RTC interrupt occurs or every 30 seconds. 
 30 seconds is always counted down from the time of the RTC interrupt, this method was chosen 
@@ -381,16 +427,7 @@ and humidity display frequency has been set to 60 seconds, the sequence will end
 If it is set to 30 seconds, a new sequence will start 30 seconds after the first sequence was started. 
 After the second cycle, the sequence will end. The next loop will start at the next full minute.*/
 void DisplayTimeAndTemperature(void)
-{  
-  clockStatus = CheckRestPeriod();
-
-  if(clockStatus == OFF) 
-  {
-    timeDisplayStatus = false;
-    DisplayRestPeriod();
-    return;
-  }
-  
+{    
   if(sequenceRunning == false)     // If the sequence is not already running, initialize it 
   {
     sequence_start_time = millis(); // Record the start time
@@ -542,6 +579,212 @@ void DisplayHumidity(void)
 
 
 
+
+/************************************************************************************************/
+void SettingSpeed(void)
+{
+  ClearPressButtonFlags();
+
+  // If the settings were enabled during the time/temperature/humidity sequence, 
+  // we need to reset the sequence flag
+  sequenceRunning = false;
+
+  // Activate the settings mode
+  modeSettingsStatus = true;
+
+  Serial.println();
+  Serial.println("FLIP DISC SPEED/DELAY EFFECT SETTINGS");
+  
+  Flip.Delay(0);
+  Flip.Display_3x1(1, 0,0,0);                     // Clear dots
+  Flip.Matrix_7Seg(S,P,E,D);
+  delay(1500);
+  Flip.Display_3x1(1, 1,1,0);                     // Set dots
+  Flip.Display_7Seg(1,S); Flip.Display_7Seg(2,P); // Display "SP"
+
+  int speed_index = 0;
+  bool updateDisplay = true;
+
+  // To correctly display the current settings we need to find speed_index, 
+  // which is the place where the current value is in flipSpeed[] array. 
+  // Then after entering the settings we start from the current value.
+  for(int i = 0; i < 6; i++)
+  {
+    if(flip_disc_delay_time == flipSpeed[i]) speed_index = i;
+  }
+
+  do // Stay in the speed/delay settings until the value is set
+  {
+    WatchButtons();
+    
+    if(shortPressButton1Status == true || shortPressButton3Status == true)
+    {      
+      if(shortPressButton1Status == true) speed_index++; // Top button "+1"
+      if(shortPressButton3Status == true) speed_index--; // Bottom button "-1"
+
+      ClearPressButtonFlags();
+      updateDisplay = true;
+    }
+    
+    if(longPressButton2Status == true)
+    {
+      ClearPressButtonFlags();
+      speedSettingsStatus = false;
+    } 
+
+    if(updateDisplay == true)
+    {
+      if(speed_index > 6) speed_index = 0;
+      if(speed_index < 0) speed_index = 6;
+
+      flip_disc_delay_time = flipSpeed[speed_index];
+      Flip.Delay(flip_disc_delay_time);
+
+      uint8_t digit3 = (flip_disc_delay_time / 10) % 10;
+      uint8_t digit4 = (flip_disc_delay_time / 1 ) % 10;
+
+      Serial.print("Speed/delay: "); Serial.print(flipSpeed[speed_index]); Serial.println("ms");  
+
+      Flip.Display_7Seg(3, digit3);
+      Flip.Display_7Seg(4, digit4);
+
+      updateDisplay = false;
+    }
+  } while(speedSettingsStatus == true); // Stay in the speed settings until all digits are set 
+
+  Serial.println("Settings have been saved");
+  Serial.println("------------------------");
+  
+  EEPROM.write(ee_delay_address, flip_disc_delay_time);
+  
+  // Required for Arduino Nano ESP32, saves the changes to the EEPROM
+  #if defined(ARDUINO_ARCH_ESP32)
+    EEPROM.commit(); 
+  #endif
+
+  modeSettingsStatus = false;
+  timeDisplayStatus = false;
+  currentTimeStatus = false;
+  interruptRtcStatus = false;
+
+  DisplayTime();
+}
+
+/************************************************************************************************/
+void SettingTemp(void)
+{
+  ClearPressButtonFlags();
+
+  // If the settings were enabled during the time/temperature/humidity sequence, 
+  // we need to reset the sequence flag
+  sequenceRunning = false;
+
+  // Settings are active
+  modeSettingsStatus = true;
+
+  Serial.println();
+  Serial.println("TEMPERATURE & HUMIDITY SETTINGS");
+
+  Flip.Delay(0);
+  Flip.Matrix_7Seg(T,E,M,P);
+  Flip.Display_3x1(1, 0,0,0); // Clear the dots
+  delay(1500); 
+  Flip.Display_3x1(1, 1,1,0); // Set the dots
+
+  uint8_t temp_settings_level = 0;
+  bool updateDisplay = true;
+
+  do // Stay in settings until all values are set
+  {
+    WatchButtons();
+
+    if(shortPressButton1Status == true || shortPressButton3Status == true)
+    {
+      if(temp_settings_level == 0) temp_on_off = !temp_on_off;
+      if(temp_settings_level == 1) temp_c_f = !temp_c_f;
+      if(temp_settings_level == 2) hum_on_off = !hum_on_off;
+      if(temp_settings_level == 3) temp_hum_fq = !temp_hum_fq; 
+
+      updateDisplay = true;
+      ClearPressButtonFlags();
+    }
+
+    if(longPressButton2Status == true)
+    {
+      temp_settings_level++;
+      if(temp_settings_level <= 3) updateDisplay = true;        // Stay in settings
+      if(temp_settings_level >  3) tempSettingsStatus = false;  // Exit settings
+
+      ClearPressButtonFlags();
+    }
+
+  if(updateDisplay == true)
+  {      
+    if(temp_settings_level == 0)
+    {
+      Serial.print("Temperature display: ");
+      if(temp_on_off == OFF) {Flip.Matrix_7Seg(T,P,O,F); Serial.println("OFF");}
+      if(temp_on_off == ON) {Flip.Matrix_7Seg(T,P,O,N); Serial.println("ON");}
+    }
+
+    // If the temperature display has been disabled then 
+    // skip the Celsius/Fahrenheit display format selection and go to the humidity display option
+    if(temp_settings_level == 1)
+    {
+      if(temp_on_off == ON) 
+      {
+        Serial.print("Temperature: ");
+        if(temp_c_f == TPF) {Flip.Matrix_7Seg(T,D,DEG,F); Serial.println("°F");}
+        if(temp_c_f == TPC) {Flip.Matrix_7Seg(T,D,DEG,C); Serial.println("°C");}
+      } else temp_settings_level = 2;
+    } 
+
+    if(temp_settings_level == 2)
+    {
+      Serial.print("Humidity display: ");
+      if(hum_on_off == OFF) {Flip.Matrix_7Seg(H,U,O,F); Serial.println("OFF");}
+      if(hum_on_off == ON) {Flip.Matrix_7Seg(H,U,O,N); Serial.println("ON");}
+    }
+
+    // If the temperature and humidity display has been disabled 
+    // then skip the display frequency option and complete the settings
+    if(temp_settings_level == 3)
+    {
+      if(temp_on_off == ON || hum_on_off == ON)
+      {
+        Serial.print("Temperature and/or Humidity display frequency: "); 
+        if(temp_hum_fq == THFQ60) {Flip.Matrix_7Seg(F,Q,6,0); Serial.println("60 seconds");}
+        if(temp_hum_fq == THFQ30) {Flip.Matrix_7Seg(F,Q,3,0); Serial.println("30 seconds");}
+      } else tempSettingsStatus = false;
+    } 
+
+    updateDisplay = false;
+  }  
+
+  } while(tempSettingsStatus == true); // Stay in the speed settings until all digits are set
+
+  Serial.println("Settings have been saved");
+  Serial.println("------------------------");
+  
+  // Save settings
+  EEPROM.write(ee_temp_on_off_address, temp_on_off);
+  EEPROM.write(ee_temp_c_f_address, temp_c_f);
+  EEPROM.write(ee_hum_on_off_address, hum_on_off);
+  EEPROM.write(ee_temp_hum_fq_address, temp_hum_fq);
+
+  // Required for Arduino Nano ESP32, saves the changes to the EEPROM
+  #if defined(ARDUINO_ARCH_ESP32)
+    EEPROM.commit(); 
+  #endif
+
+  modeSettingsStatus = false;
+  timeDisplayStatus = false;
+  currentTimeStatus = false;
+  interruptRtcStatus = false;
+
+  DisplayTime();
+}
+
 /************************************************************************************************/
 void SettingTime(void)
 {
@@ -616,21 +859,6 @@ void SettingTime(void)
   #if defined(ARDUINO_ARCH_ESP32)
     EEPROM.commit(); 
   #endif
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   Serial.println();
   Serial.println("TIME SETTINGS");
@@ -820,7 +1048,6 @@ void SettingTime(void)
 
   timeSettingsStatus = true;
   time_settings_level = 0;
-
 
   do
   {
@@ -1043,244 +1270,8 @@ void SettingTime(void)
   
   modeSettingsStatus = false;
   timeDisplayStatus = false;
+  currentTimeStatus = false;
+  interruptRtcStatus = false;
 
   DisplayTime();
 }
-
-/************************************************************************************************/
-void SettingSpeed(void)
-{
-  ClearPressButtonFlags();
-
-  // If the settings were enabled during the time/temperature/humidity sequence, 
-  // we need to reset the sequence flag
-  sequenceRunning = false;
-
-  // Activate the settings mode
-  modeSettingsStatus = true;
-
-  Serial.println();
-  Serial.println("FLIP DISC SPEED/DELAY EFFECT SETTINGS");
-  
-  Flip.Delay(0);
-  Flip.Display_3x1(1, 0,0,0);                     // Clear dots
-  Flip.Matrix_7Seg(S,P,E,D);
-  delay(1500);
-  Flip.Display_3x1(1, 1,1,0);                     // Set dots
-  Flip.Display_7Seg(1,S); Flip.Display_7Seg(2,P); // Display "SP"
-
-  int speed_index = 0;
-  bool updateDisplay = true;
-
-  // To correctly display the current settings we need to find speed_index, 
-  // which is the place where the current value is in flipSpeed[] array. 
-  // Then after entering the settings we start from the current value.
-  for(int i = 0; i < 6; i++)
-  {
-    if(flip_disc_delay_time == flipSpeed[i]) speed_index = i;
-  }
-
-  do // Stay in the speed/delay settings until the value is set
-  {
-    WatchButtons();
-    
-    if(shortPressButton1Status == true || shortPressButton3Status == true)
-    {      
-      if(shortPressButton1Status == true) speed_index++; // Top button "+1"
-      if(shortPressButton3Status == true) speed_index--; // Bottom button "-1"
-
-      ClearPressButtonFlags();
-      updateDisplay = true;
-    }
-    
-    if(longPressButton2Status == true)
-    {
-      ClearPressButtonFlags();
-      speedSettingsStatus = false;
-    } 
-
-    if(updateDisplay == true)
-    {
-      if(speed_index > 6) speed_index = 0;
-      if(speed_index < 0) speed_index = 6;
-
-      flip_disc_delay_time = flipSpeed[speed_index];
-      Flip.Delay(flip_disc_delay_time);
-
-      uint8_t digit3 = (flip_disc_delay_time / 10) % 10;
-      uint8_t digit4 = (flip_disc_delay_time / 1 ) % 10;
-
-      Serial.print("Speed/delay: "); Serial.print(flipSpeed[speed_index]); Serial.println("ms");  
-
-      Flip.Display_7Seg(3, digit3);
-      Flip.Display_7Seg(4, digit4);
-
-      updateDisplay = false;
-    }
-  } while(speedSettingsStatus == true); // Stay in the speed settings until all digits are set 
-
-  Serial.println("Settings have been saved");
-  Serial.println("------------------------");
-  
-  EEPROM.write(ee_delay_address, flip_disc_delay_time);
-  
-  // Required for Arduino Nano ESP32, saves the changes to the EEPROM
-  #if defined(ARDUINO_ARCH_ESP32)
-    EEPROM.commit(); 
-  #endif
-
-  modeSettingsStatus = false;
-  timeDisplayStatus = false;
-
-  DisplayTime();
-}
-
-/************************************************************************************************/
-void SettingTemp(void)
-{
-  ClearPressButtonFlags();
-
-  // If the settings were enabled during the time/temperature/humidity sequence, 
-  // we need to reset the sequence flag
-  sequenceRunning = false;
-
-  // Settings are active
-  modeSettingsStatus = true;
-
-  Serial.println();
-  Serial.println("TEMPERATURE & HUMIDITY SETTINGS");
-
-  Flip.Delay(0);
-  Flip.Matrix_7Seg(T,E,M,P);
-  Flip.Display_3x1(1, 0,0,0); // Clear the dots
-  delay(1500); 
-  Flip.Display_3x1(1, 1,1,0); // Set the dots
-
-  uint8_t temp_settings_level = 0;
-  bool updateDisplay = true;
-
-  do // Stay in settings until all values are set
-  {
-    WatchButtons();
-
-    if(shortPressButton1Status == true || shortPressButton3Status == true)
-    {
-      if(temp_settings_level == 0) temp_on_off = !temp_on_off;
-      if(temp_settings_level == 1) temp_c_f = !temp_c_f;
-      if(temp_settings_level == 2) hum_on_off = !hum_on_off;
-      if(temp_settings_level == 3) temp_hum_fq = !temp_hum_fq; 
-
-      updateDisplay = true;
-      ClearPressButtonFlags();
-    }
-
-    if(longPressButton2Status == true)
-    {
-      temp_settings_level++;
-      if(temp_settings_level <= 3) updateDisplay = true;        // Stay in settings
-      if(temp_settings_level >  3) tempSettingsStatus = false;  // Exit settings
-
-      ClearPressButtonFlags();
-    }
-
-  if(updateDisplay == true)
-  {      
-    if(temp_settings_level == 0)
-    {
-      Serial.print("Temperature display: ");
-      if(temp_on_off == OFF) {Flip.Matrix_7Seg(T,P,O,F); Serial.println("OFF");}
-      if(temp_on_off == ON) {Flip.Matrix_7Seg(T,P,O,N); Serial.println("ON");}
-    }
-
-    // If the temperature display has been disabled then 
-    // skip the Celsius/Fahrenheit display format selection and go to the humidity display option
-    if(temp_settings_level == 1)
-    {
-      if(temp_on_off == ON) 
-      {
-        Serial.print("Temperature: ");
-        if(temp_c_f == TPF) {Flip.Matrix_7Seg(T,D,DEG,F); Serial.println("°F");}
-        if(temp_c_f == TPC) {Flip.Matrix_7Seg(T,D,DEG,C); Serial.println("°C");}
-      } else temp_settings_level = 2;
-    } 
-
-    if(temp_settings_level == 2)
-    {
-      Serial.print("Humidity display: ");
-      if(hum_on_off == OFF) {Flip.Matrix_7Seg(H,U,O,F); Serial.println("OFF");}
-      if(hum_on_off == ON) {Flip.Matrix_7Seg(H,U,O,N); Serial.println("ON");}
-    }
-
-    // If the temperature and humidity display has been disabled 
-    // then skip the display frequency option and complete the settings
-    if(temp_settings_level == 3)
-    {
-      if(temp_on_off == ON || hum_on_off == ON)
-      {
-        Serial.print("Temperature and/or Humidity display frequency: "); 
-        if(temp_hum_fq == THFQ60) {Flip.Matrix_7Seg(F,Q,6,0); Serial.println("60 seconds");}
-        if(temp_hum_fq == THFQ30) {Flip.Matrix_7Seg(F,Q,3,0); Serial.println("30 seconds");}
-      } else tempSettingsStatus = false;
-    } 
-
-    updateDisplay = false;
-  }  
-
-  } while(tempSettingsStatus == true); // Stay in the speed settings until all digits are set
-
-  Serial.println("Settings have been saved");
-  Serial.println("------------------------");
-  
-  // Save settings
-  EEPROM.write(ee_temp_on_off_address, temp_on_off);
-  EEPROM.write(ee_temp_c_f_address, temp_c_f);
-  EEPROM.write(ee_hum_on_off_address, hum_on_off);
-  EEPROM.write(ee_temp_hum_fq_address, temp_hum_fq);
-
-  // Required for Arduino Nano ESP32, saves the changes to the EEPROM
-  #if defined(ARDUINO_ARCH_ESP32)
-    EEPROM.commit(); 
-  #endif
-
-  modeSettingsStatus = false;
-  timeDisplayStatus = false;
-
-  DisplayTime();
-}
-
-/************************************************************************************************/
-// Button flags clearing function
-void ClearPressButtonFlags(void)
-{
-  shortPressButton1Status = false;
-  shortPressButton3Status = false;
-  longPressButton1Status = false;
-  longPressButton2Status = false;
-  longPressButton3Status = false;
-}
-
-/************************************************************************************************/
-// Keep watching the buttons
-void WatchButtons(void)
-{
-  button1.tick();
-  button2.tick();
-  button3.tick();
-
-  // If the time settings are not currently active,
-  // and if a long press of the middle or top button is detected, set corresponding flag
-  if(modeSettingsStatus == false)
-  {
-    if(longPressButton1Status == true) speedSettingsStatus = true;
-    if(longPressButton2Status == true) timeSettingsStatus = true;
-    if(longPressButton3Status == true) tempSettingsStatus = true;
-  }
-}
-
-/************************************************************************************************/
-// Button press handling functions
-void ShortPressButton1(void){shortPressButton1Status = true;}
-void ShortPressButton3(void){shortPressButton3Status = true;}
-void LongPressButton1(void){longPressButton1Status = true;}
-void LongPressButton2(void){longPressButton2Status = true;}
-void LongPressButton3(void){longPressButton3Status = true;}

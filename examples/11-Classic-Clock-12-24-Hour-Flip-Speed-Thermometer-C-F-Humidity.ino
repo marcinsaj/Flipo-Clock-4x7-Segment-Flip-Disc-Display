@@ -1362,6 +1362,26 @@ void SettingTime(void)
     EEPROM.commit(); 
   #endif
 
+  updateDisplay = true;
+  
+  do
+  {
+    WatchButtons();
+
+    if(updateDisplay == true)
+    {
+      Flip.Display_3x1(1, 0,0,0);
+      Flip.Matrix_7Seg(E,X,I,T);
+      Serial.println("Long press the middle button to exit");
+      updateDisplay = false;  
+    }
+  } while(longPressButton2Status == false);
+
+  ClearPressButtonFlags();
+  
+  Serial.println("Settings have been saved");
+  Serial.println("------------------------");
+
   // setTime(hh, mm, ss, day, month, year) 
   // The date is skipped and the seconds are set by default to 0
   // We are only interested in hours and minutes

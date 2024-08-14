@@ -741,6 +741,8 @@ void SettingSpeed(void)
       uint8_t digit3 = (flip_disc_delay_time / 10) % 10;
       uint8_t digit4 = (flip_disc_delay_time / 1 ) % 10;
 
+      if(digit3 == 0) digit3 = CLR;
+
       Serial.print("Speed/delay: "); Serial.print(flipSpeed[speed_index]); Serial.println("ms");  
 
       Flip.Display_7Seg(3, digit3);

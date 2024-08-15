@@ -331,8 +331,8 @@ void ClearPressButtonFlags(void)
   longPressButton2Status = false;
   longPressButton3Status = false;
 }
-/************************************************************************************************/
 
+/************************************************************************************************/
 void DisplayRestPeriod(void)
 {
   Flip.Display_3x1(1, 0,0,0);

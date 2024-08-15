@@ -23,3 +23,11 @@ Setting options:
 > Regardless of the temperature and/or humidity display frequency setting of 30/60 seconds, the display sequence always starts from a full minute. First, the time is displayed. Then, if the temperature and humidity display is enabled, the temperature is displayed, followed by the humidity. If the display interval is set to 30 seconds, the next display sequence will start after 30 seconds from the start of the first sequence.
 ---
 
+![4x7-Segment-Clock-Settings](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/extras/4x7-Segment-Clock-Settings-1.png)
+![4x7-Segment-Clock-Settings](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/extras/4x7-Segment-Clock-Settings-2.png)
+![4x7-Segment-Clock-Settings](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/extras/4x7-Segment-Clock-Settings-3.png)
+![4x7-Segment-Clock-Settings](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/extras/4x7-Segment-Clock-Settings-4.png)
+![4x7-Segment-Clock-Settings](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/extras/4x7-Segment-Clock-Settings-5.png)
+![4x7-Segment-Clock-Settings](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/extras/4x7-Segment-Clock-Settings-6.png)
+![4x7-Segment-Clock-Settings](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/extras/4x7-Segment-Clock-Settings-7.png)
+![4x7-Segment-Clock-Settings](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/extras/4x7-Segment-Clock-Settings-8.png)

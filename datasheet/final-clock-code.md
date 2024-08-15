@@ -3,7 +3,7 @@
 - [x] [Open final clock code](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/11-Final-Clock-Code.ino)
 ---
 
-Setting options:
+### Setting options:
 - time - 12/24 hour
 - rest period - sleep hour, wake hour
 - leading zero - on/off

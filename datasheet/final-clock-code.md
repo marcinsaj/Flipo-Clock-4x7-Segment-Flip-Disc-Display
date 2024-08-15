@@ -1,4 +1,8 @@
-Settings:
+- [x] [Download settings instructions](https://bit.ly/4x7SEG-CLOCK-SET)
+- [x] [Open final clock code](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/11-Final-Clock-Code.ino)
+---
+
+Setting options:
 - time - 12/24 hour
 - leading zero - on/off
 - speed/delay flip disc effect - 0-99ms
@@ -6,9 +10,7 @@ Settings:
 - temperature degrees °F/°C
 - humidity display - on/off
 - temperature and/or humidity display frequency - 30/60 seconds
-
-- [x] [Download settings instructions](https://bit.ly/4x7SEG-CLOCK-SET)
-- [x] [Open final clock code](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/11-Final-Clock-Code.ino)
+---
 
 ### Clock Operation
 > [!TIP]  

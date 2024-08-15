@@ -1,3 +1,4 @@
+### Final Clock Code
 - [x] [Download settings instructions](https://bit.ly/4x7SEG-CLOCK-SET)
 - [x] [Open final clock code](https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display/blob/main/examples/11-Final-Clock-Code.ino)
 ---

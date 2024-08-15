@@ -173,7 +173,7 @@ static const uint16_t ee_temp_hum_fq_address = 9;  // Temperature and humidity d
 static const uint8_t eeprom_size = 10;
 
 /************************************************************************************************/
-
+// Interrupt from RTC
 void rtcInterruptISR(void)
 {
   interruptRtcStatus = true;

@@ -1,15 +1,20 @@
-not ready
 /*-----------------------------------------------------------------------------------------------*
  * 7-Segment Flip-disc Clock by Marcin Saj https://flipo.io                                      *
  * https://github.com/marcinsaj/Flipo-Clock-4x7-Segment-Flip-Disc-Display                        *
  *                                                                                               *
- * Classic 12/24-hour Clock                                                                      *
- * + Flip Disc Speed/Delay Settings                                                              *
- * + Time Settings                                                                               *
- * + Temperature & Humidity Settings                                                             *
+ * Final Flip-disc Clock 4x7-Segment                                                             *
+ * Setting Options:                                                                              *
+ * - time - 12/24 hour                                                                           *
+ * - rest period - sleep hour, wake hour                                                         *
+ * - leading zero - on/off                                                                       *
+ * - speed/delay flip disc effect - 0-99ms                                                       *
+ * - temperature display - on/off                                                                *
+ * - temperature degrees °F/°C                                                                   *
+ * - humidity display - on/off                                                                   *
+ * - temperature and/or humidity display frequency - 30/60 seconds                               *
  *                                                                                               *
  * Attention!!! - Firmware Update Instructions - https://bit.ly/4x7SEG-CLOCK-FIRMWARE-UPDATE     *
- * Settings Instructions -                                                                       *
+ * Settings Instructions - https://bit.ly/4x7SEG-CLOCK-SET                                       *
  *                                                                                               *
  * Setup:                                                                                        *
  * Assembly Instructions - https://bit.ly/Flip-Disc-Clock-Assembly                               *
@@ -93,39 +98,12 @@ bool currentTimeStatus = false;
 // the current temperature will be displayed
 bool tempDisplayStatus = false;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 float humidity = 0;
 float temperature_celsius = 0;
 float temperature_fahrenheit = 0;
 
 // Temperature and humidity measurement status flag
 bool measurementStatus = false;
-
-
-
-
-
-
-
-
-
-
-
-
 
 // Declare structure that allows convenient access to the time elements:
 // - tm.Hour - hours
@@ -548,32 +526,9 @@ void DisplayTimeAndTemperature(void)
       timeDisplayStatus = false;
       break;
   }
-} 
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+/************************************************************************************************/
 void MeasureTemperatureAndHumidity(void)
 {
   // Reading temperature and humidity
@@ -951,14 +906,6 @@ void SettingTime(void)
       updateDisplay = false;
     } 
   } while(timeSettingsStatus == true);
-
-  EEPROM.write(ee_time_hr_address, time_hr); // Save the selected 12/24 time format to memory
-  EEPROM.write(ee_leading_zero_address, leading_zero);
-
-  // Required for Arduino Nano ESP32, saves the changes to the EEPROM
-  #if defined(ARDUINO_ARCH_ESP32)
-    EEPROM.commit(); 
-  #endif
 
   Serial.println();
   Serial.println("TIME SETTINGS");
@@ -1356,15 +1303,6 @@ void SettingTime(void)
     if(wake_am_pm == AM && wake_hour == 12) wake_hour = 0;
   }
 
-  EEPROM.write(ee_rest_period_address, rest_period);
-  EEPROM.write(ee_sleep_hour_address, sleep_hour);
-  EEPROM.write(ee_wake_hour_address, wake_hour);
-
-  // Required for Arduino Nano ESP32, saves the changes to the EEPROM
-  #if defined(ARDUINO_ARCH_ESP32)
-    EEPROM.commit(); 
-  #endif
-
   updateDisplay = true;
   
   do
@@ -1381,6 +1319,17 @@ void SettingTime(void)
   } while(longPressButton2Status == false);
 
   ClearPressButtonFlags();
+
+  EEPROM.write(ee_time_hr_address, time_hr);
+  EEPROM.write(ee_leading_zero_address, leading_zero);
+  EEPROM.write(ee_rest_period_address, rest_period);
+  EEPROM.write(ee_sleep_hour_address, sleep_hour);
+  EEPROM.write(ee_wake_hour_address, wake_hour);
+
+  // Required for Arduino Nano ESP32, saves the changes to the EEPROM
+  #if defined(ARDUINO_ARCH_ESP32)
+    EEPROM.commit(); 
+  #endif
   
   Serial.println("Settings have been saved");
   Serial.println("------------------------");

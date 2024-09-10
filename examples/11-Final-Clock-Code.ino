@@ -172,12 +172,16 @@ static const uint16_t ee_temp_hum_fq_address = 9;  // Temperature and humidity d
 // Required for EEPROM.begin(eeprom_size) for Arduino Nano ESP32
 static const uint8_t eeprom_size = 10;
 
+
 /************************************************************************************************/
 // Interrupt from RTC
-void rtcInterruptISR(void)
-{
-  interruptRtcStatus = true;
-}
+#if defined(ARDUINO_ARCH_ESP32)
+  void ARDUINO_ISR_ATTR rtcInterruptISR(void) // Required for Arduino Nano ESP32
+  {interruptRtcStatus = true;}
+#else
+  void rtcInterruptISR(void)
+  {interruptRtcStatus = true;}
+#endif
 
 /************************************************************************************************/
 void setup() 
@@ -213,7 +217,11 @@ void setup()
   
   // Assign an interrupt handler to the RTC output, 
   // an interrupt will be generated every minute to display the time
-  attachInterrupt(digitalPinToInterrupt(RTC_PIN), rtcInterruptISR, FALLING);
+  #if defined(ARDUINO_ARCH_ESP32)
+    attachInterrupt(RTC_PIN, rtcInterruptISR, FALLING); // Required for Arduino Nano ESP32
+  #else
+    attachInterrupt(digitalPinToInterrupt(RTC_PIN), rtcInterruptISR, FALLING);
+  #endif
 
   // Attention: do not change! Changing these settings may physical damage the flip-disc displays.
   Flip.Init(D7SEG, D7SEG, D3X1, D7SEG, D7SEG);
